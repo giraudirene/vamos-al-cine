@@ -49,9 +49,12 @@ def parse_rows(block, vose, label):
         sd = re.search(r'data-sess-date="(\d{4}-\d\d-\d\d)"', row)
         md = re.search(r'<span class="mday">(.*?)</span>', row)
         date = sd.group(1) if sd else (to_date(txt(md.group(1))) if md and txt(md.group(1)) else None)
-        for room, t in re.findall(r'title="([^"]*)"[^>]*>\s*(\d\d:\d\d)\s*</a>', row):
+        for tag, t in re.findall(r'(<a [^>]*>)\s*(\d\d:\d\d)\s*</a>', row):
+            room = re.search(r'title="([^"]*)"', tag)
+            href = re.search(r'href="([^"]*)"', tag)
             if date:
-                shows.append({"date": date, "time": t, "vose": vose, "label": label, "room": room})
+                shows.append({"date": date, "time": t, "vose": vose, "label": label, "room": room.group(1) if room else "",
+                              "url": html.unescape(href.group(1)) if href else ""})
     return shows
 
 

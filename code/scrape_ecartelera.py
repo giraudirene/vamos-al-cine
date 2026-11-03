@@ -83,6 +83,7 @@ def parse_films(page):
         m = re.search(r'<span class="nota[^"]*">([\d.]+)</span>', b)
         f["ec_score"] = float(m.group(1)) if m else None
         f["times"] = re.findall(r'data-session-time="(\d\d:\d\d)"', b)
+        f["urls"] = [u for u, _ in re.findall(r'<a href="([^"]+)"[^>]*data-session-time="(\d\d:\d\d)"', b)]
         f["formats"] = re.findall(r'data-session-format="([^"]*)"', b)
         if f["times"]:
             films.append(f)
@@ -120,8 +121,8 @@ def main(outdir):
                 key = f["url"]
                 if key not in films:
                     films[key] = {k: f[k] for k in ("title", "url", "poster", "runtime", "age", "country", "genre", "director", "cast", "ec_score")}
-                for t, fmt in zip(f["times"], f["formats"] + [""] * len(f["times"])):
-                    shows.append({"film": key, "cinema": cid, "date": date, "time": t, "format": fmt})
+                for t, fmt, u in zip(f["times"], f["formats"] + [""] * len(f["times"]), f["urls"] + [""] * len(f["times"])):
+                    shows.append({"film": key, "cinema": cid, "date": date, "time": t, "format": fmt, "url": u})
                     n += 1
         print(f"[{i+1}/{len(cinemas)}] {name}: {len(days)} days, {n} shows", file=sys.stderr)
 

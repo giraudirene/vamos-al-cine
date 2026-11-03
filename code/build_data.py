@@ -104,9 +104,9 @@ def main(d):
                     films[fid][k] = f[src]
         return fid
 
-    def add_show(fid, cid, date, t, vose, price=None, cycle=""):
-        if TODAY <= date <= LAST:
-            shows[(fid, cid, date, t)] = [fid, cid, date, t, int(bool(vose)), price, cycle]
+    def add_show(fid, cid, date, t, vose, price=None, cycle="", url=""):
+        if TODAY <= date <= LAST:                 # url: the session's ticket page, when the source gives one
+            shows[(fid, cid, date, t)] = [fid, cid, date, t, int(bool(vose)), price, cycle, url or ""]
 
     def lookup(title, year=None, director="", country=""):
         """Filmaffinity id for a film not already in the Filmaffinity cinema data (cached search)."""
@@ -152,7 +152,7 @@ def main(d):
         for f in c["films"]:
             add_film(f["fa_id"], f)
             for s in f["shows"]:
-                add_show(f["fa_id"], cid, s["date"], s["time"], s["vose"])
+                add_show(f["fa_id"], cid, s["date"], s["time"], s["vose"], url=s.get("url", ""))
 
     # 2. Verdi and Doré from their own sites
     for x in extra:
@@ -178,7 +178,7 @@ def main(d):
                 films[fid]["u"] = s.get("url", "")
             elif s.get("imdb") and not films[fid]["imdb"]:
                 films[fid]["imdb"] = re.sub(r".*/(tt\d+).*", r"\1", s["imdb"])
-            add_show(fid, cid, s["date"], s["time"], s["vose"], s.get("price"), s.get("cycle", ""))
+            add_show(fid, cid, s["date"], s["time"], s["vose"], s.get("price"), s.get("cycle", ""), s.get("url", ""))
             if s.get("cycle") and FEST_RE.search(s["cycle"]) and TODAY <= s["date"] <= FEST_LAST:
                 fest.append({"date": s["date"], "time": s["time"], "t": s["title"], "u": s.get("url", ""),
                              "cyc": s["cycle"], "w": x["name"]})
@@ -208,7 +208,7 @@ def main(d):
                                "director": f["director"], "cast": f["cast"], "runtime": f["runtime"], "age": f["age"],
                                "poster": f.get("poster", "")})
                 films[fid]["u"] = f["url"]
-            add_show(fid, ec_cid[s["cinema"]], s["date"], s["time"], 0)
+            add_show(fid, ec_cid[s["cinema"]], s["date"], s["time"], 0, url=s.get("url", ""))
 
     # 4. Cineteca: festival / cycle programme, listed separately (no ratings)
     fc = fa_cinema("Cineteca")

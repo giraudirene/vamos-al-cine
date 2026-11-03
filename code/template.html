@@ -128,6 +128,9 @@ main { padding-block: 8px 40px; }
 .times { display: flex; flex-wrap: wrap; gap: 5px; }
 .t { font-size: 13.5px; font-variant-numeric: tabular-nums; padding: 2px 8px; border-radius: 4px; background: var(--chip); }
 .t.vo { background: var(--vo-bg); color: var(--vo); font-weight: 600; }
+a.t { color: inherit; text-decoration: none; border: 1px solid transparent; }
+a.t:hover { border-color: currentColor; }
+a.t.vo { color: var(--vo); }
 .t.vo::after { content: " VO"; font-size: 10px; letter-spacing: .05em; }
 .t.past { color: var(--past); background: transparent; text-decoration: line-through; }
 .t .d { color: var(--muted); font-size: 11px; margin-right: 4px; }
@@ -239,6 +242,7 @@ footer a { color: inherit; }
 .calrow a { color: var(--ink); }
 .addt { grid-template-columns: minmax(0, 1fr) auto; align-items: end; margin-top: 10px; }
 .filebtn { display: inline-block; cursor: pointer; }
+.cinehits { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 @media (max-width: 640px) {
   .calrow summary { grid-template-columns: minmax(0, 1fr); }
   .calrow .meta { grid-column: 1; }
@@ -380,7 +384,7 @@ footer a { color: inherit; }
         "Instala la app gratuita ntfy (Android, iPhone o en ntfy.sh desde el ordenador). No necesita cuenta.",
         "En ntfy, suscríbete a este tema (es tu código secreto):",
         "Copia estas líneas y añádelas al archivo alerts.txt de la web (o envíaselas a quien la administra). Cada mañana, cuando una película que sigues entre en cartel, te llegará un aviso."],
-      emailSoon: "Pronto: crea una cuenta para guardar tus películas en cualquier dispositivo y recibir un email cuando una que sigues entre en cartel.", copy: "Copiar", copied: "Copiado", newTopic: "Generar otro código", openAlerts: "Abrir alerts.txt en GitHub", nothingToCopy: "Sigue alguna película para generar las líneas.",
+      emailSoon: "Pronto: crea una cuenta para guardar tus películas en cualquier dispositivo y recibir un email cuando una que sigues entre en cartel.", buy: "Comprar entrada", copy: "Copiar", copied: "Copiado", newTopic: "Generar otro código", openAlerts: "Abrir alerts.txt en GitHub", nothingToCopy: "Sigue alguna película para generar las líneas.",
     },
     en: {
       tagline: "The best-rated films in Madrid's cinemas, with their showtimes.", score: "Score", avg: "Average", cinemas: "Cinemas",
@@ -430,7 +434,7 @@ footer a { color: inherit; }
         "Install the free ntfy app (Android, iPhone, or ntfy.sh on a computer). No account needed.",
         "In ntfy, subscribe to this topic (it's your secret code):",
         "Copy these lines and add them to the site's alerts.txt file (or send them to whoever runs the site). Every morning, when a film you follow starts showing, you'll get a notification."],
-      emailSoon: "Coming soon: create an account to keep your films on any device and get an email when a film you follow starts showing.", copy: "Copy", copied: "Copied", newTopic: "Make a new code", openAlerts: "Open alerts.txt on GitHub", nothingToCopy: "Follow a film to generate the lines.",
+      emailSoon: "Coming soon: create an account to keep your films on any device and get an email when a film you follow starts showing.", buy: "Buy a ticket", copy: "Copy", copied: "Copied", newTopic: "Make a new code", openAlerts: "Open alerts.txt on GitHub", nothingToCopy: "Follow a film to generate the lines.",
     },
     fr: {
       tagline: "Les films les mieux notés dans les cinémas de Madrid, avec leurs horaires.", score: "Note", avg: "Moyenne", cinemas: "Cinémas",
@@ -480,7 +484,7 @@ footer a { color: inherit; }
         "Installez l'appli gratuite ntfy (Android, iPhone, ou ntfy.sh sur ordinateur). Pas besoin de compte.",
         "Dans ntfy, abonnez-vous à ce sujet (c'est votre code secret) :",
         "Copiez ces lignes et ajoutez-les au fichier alerts.txt du site (ou envoyez-les à la personne qui gère le site). Chaque matin, quand un film suivi arrive à l'affiche, vous recevrez une alerte."],
-      emailSoon: "Bientôt : créez un compte pour retrouver vos films sur tous vos appareils et recevoir un e-mail quand un film suivi arrive à l’affiche.", copy: "Copier", copied: "Copié", newTopic: "Nouveau code", openAlerts: "Ouvrir alerts.txt sur GitHub", nothingToCopy: "Suivez un film pour générer les lignes.",
+      emailSoon: "Bientôt : créez un compte pour retrouver vos films sur tous vos appareils et recevoir un e-mail quand un film suivi arrive à l’affiche.", buy: "Acheter une place", copy: "Copier", copied: "Copié", newTopic: "Nouveau code", openAlerts: "Ouvrir alerts.txt sur GitHub", nothingToCopy: "Suivez un film pour générer les lignes.",
     },
   };
   const WDS = { es: ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"], en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], fr: ["dim", "lun", "mar", "mer", "jeu", "ven", "sam"] };
@@ -507,6 +511,8 @@ footer a { color: inherit; }
   const proj = (lat, lon) => [(lon - LON0) * KX, -(lat - LAT0) * KY];
   const km = (a, b) => Math.hypot((a.lon - b.lon) * KX, (a.lat - b.lat) * KY);
   const $ = id => document.getElementById(id);
+  // search: every typed word must start a word of the title, director or cinema ("dore" finds Doré, not Embajadores)
+  const hits = (text, q) => { if (!q) return true; const w = norm(text).split(" "); return q.split(" ").every(t => w.some(x => x.startsWith(t))); };
 
   const now = new Date(), todayIso = iso(now), nowMin = now.getHours() * 60 + now.getMinutes();
   const toMin = t => { const m = +t.slice(0, 2) * 60 + +t.slice(3); return m < 300 ? m + 1440 : m; };   // after-midnight sessions count as late
@@ -625,7 +631,7 @@ footer a { color: inherit; }
     if (METRO.length) fillSelect($("fNear"), METRO.map(m => [m[0], m[0]])); else $("nearWrap").hidden = true;
     [["fGenre", "genre"], ["fCountry", "country"], ["fFrom", "from"], ["fUntil", "until"], ["fNear", "near"]].forEach(([id, k]) => { $(id).value = state[k]; });
     $("fDur").value = String(state.dur); $("fRadius").value = String(state.radius);
-    $("titles").innerHTML = [...new Set(D.films.flatMap(f => [f.t, f.en].filter(Boolean)))].sort((a, b) => a.localeCompare(b, "es")).map(t => `<option value="${esc(t)}">`).join("");
+    $("titles").innerHTML = [...new Set(D.films.flatMap(f => [f.t, f.en].filter(Boolean)).concat(D.cinemas.map(c => c.n)))].sort((a, b) => a.localeCompare(b, "es")).map(t => `<option value="${esc(t)}">`).join("");
   }
   [["fGenre", "genre"], ["fCountry", "country"], ["fFrom", "from"], ["fUntil", "until"], ["fNear", "near"]].forEach(([id, k]) => {
     $(id).addEventListener("change", e => { state[k] = e.target.value; save(); render(); });
@@ -690,8 +696,11 @@ footer a { color: inherit; }
       <div class="n">${val}${R.max === 5 ? "<small>/5</small>" : ""}</div><div class="v">${R.v.toLocaleString(lang)} ${T("votes")}</div></${tag}>`;
   }
   const sortFilms = (a, b) => { const A = SRC[state.src].get(a), B = SRC[state.src].get(b); return (B.r ?? -1) / B.max - (A.r ?? -1) / A.max || B.v - A.v; };
-  const chipsHtml = (list, multi) => list.map(s =>
-    `<span class="t${s[4] ? " vo" : ""}${isPast(s) ? " past" : ""}"${s[5] != null ? ` title="${esc(eur(s[5]))}"` : ""}>${multi ? `<span class="d">${WD()[parse(s[2]).getDay()]}</span>` : ""}${s[3]}</span>`).join("");
+  // each time links to that session's ticket page, or to the cinema's own listing when the source gives no link
+  const chipsHtml = (list, multi) => list.map(s => {
+    const url = s[7] || D.cinemas[s[1]].u, tip = T("buy") + (s[5] != null ? " · " + eur(s[5]) : "");
+    return `<a class="t${s[4] ? " vo" : ""}${isPast(s) ? " past" : ""}" href="${esc(url)}" target="_blank" rel="noopener" title="${esc(tip)}">${multi ? `<span class="d">${WD()[parse(s[2]).getDay()]}</span>` : ""}${s[3]}</a>`;
+  }).join("");
   const filteredShows = extra => D.shows.filter(s => (state.day === "all" || s[2] === state.day) && (!state.vose || s[4]) && (!extra || extra(s)));
   const badges = f => (f.y && f.y < 2000 ? `<span class="badge classic">${T("classic")}</span>` : "") +
     (isNew(f) ? `<span class="badge new">${T("isNew")}</span>` : "") + (isLast(f) ? `<span class="badge last">${T("lastDays")}</span>` : "") +
@@ -722,7 +731,7 @@ footer a { color: inherit; }
       if (state.near) { const d = distTo(s[1]); if (d == null || d > state.radius) return false; }
       const f = D.films[s[0]];
       if (!filmOk(f)) return false;
-      if (q && !(f.keys.some(k => k.includes(q)) || norm(f.d).includes(q) || norm(D.cinemas[s[1]].n).includes(q))) return false;
+      if (q && !(f.keys.some(k => hits(k, q)) || hits(f.d, q) || hits(D.cinemas[s[1]].n, q))) return false;
       return true;
     })) {
       if (!byFilm.has(s[0])) byFilm.set(s[0], []);
@@ -745,8 +754,10 @@ footer a { color: inherit; }
 
     const multi = state.day === "all";
     const rawQ = $("q").value.trim();
-    const offerTrack = rawQ.length >= 3 && !D.films.some(f => f.keys.some(k => k.includes(q))) && !state.track.some(t => norm(t) === q);
-    $("list").innerHTML = (!films.length ? `<div class="empty">${esc(T("none"))}</div>` : "") +
+    const cineHits = q ? D.cinemas.map((c, i) => [c, i]).filter(([c]) => hits(c.n, q)) : [];
+    const offerTrack = rawQ.length >= 3 && !cineHits.length && !D.films.some(f => f.keys.some(k => hits(k, q))) && !state.track.some(t => norm(t) === q);
+    $("list").innerHTML = (cineHits.length ? `<div class="cinehits">${cineHits.slice(0, 6).map(([c, i]) => `<button class="pill" type="button" data-cine="${i}">${esc(c.n)} →</button>`).join("")}</div>` : "") +
+      (!films.length ? `<div class="empty">${esc(T("none"))}</div>` : "") +
       (offerTrack ? `<div class="empty"><button class="btn" type="button" id="trackQuery">${esc(T("trackQuery")(rawQ))}</button></div>` : "") +
       films.map((f, k) => {
         const ss = byFilm.get(f.idx);
@@ -786,7 +797,7 @@ footer a { color: inherit; }
     const tq = $("trackQuery"); if (tq) tq.addEventListener("click", () => { state.track.push(rawQ); save(); $("q").value = ""; state.q = ""; render(); openTracking(); });
 
     // today's festival sessions
-    const ev = D.events.filter(e => e.date >= todayIso && (state.day === "all" || e.date === state.day) && (!q || norm(e.t + " " + e.cyc + " " + e.sec + " " + e.w).includes(q)));
+    const ev = D.events.filter(e => e.date >= todayIso && (state.day === "all" || e.date === state.day) && hits(e.t + " " + e.cyc + " " + e.sec + " " + e.w, q));
     $("fest").innerHTML = `<h3>${T("fest")}</h3><p>${T("festIntro")}</p>` +
       (ev.length ? ev.map(e => {
         const dt = parse(e.date);
