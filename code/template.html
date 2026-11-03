@@ -259,6 +259,11 @@ footer a { color: inherit; }
 .form textarea { font: inherit; font-size: 14px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; resize: vertical; }
 .rev { border-top: 1px solid var(--line); padding-block: 10px; font-size: 14px; }
 .rev p { margin: 4px 0 0; white-space: pre-line; }
+.reply { margin: 8px 0 0 18px; padding-left: 12px; border-left: 2px solid var(--line); }
+.ractions { display: flex; gap: 14px; margin-top: 4px; }
+.more.danger { color: var(--muted); }
+.more.danger:hover { color: var(--accent); }
+.replyform { margin: 8px 0 0 18px; }
 .rstars { color: var(--fav); letter-spacing: 1px; }
 .okmsg { font-size: 13px; color: var(--deal); }
 .intro { font-size: 14px; margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--vo-bg); color: var(--ink); }
@@ -1077,7 +1082,7 @@ footer a { color: inherit; }
 
   // ---------- accounts, saved choices and reviews (Supabase) ----------
   const LA = {
-    es: { signIn: "Entrar", loginToSave: "Guardado en este navegador. Entra o crea una cuenta para conservarlo y verlo en cualquier dispositivo.", account: "Mi cuenta", club: "Club", nComments: n => `${n} comentario${n === 1 ? "" : "s"}`,
+    es: { signIn: "Entrar", reply: "Responder", replyPh: n => `Responder a ${n}…`, send: "Enviar", cancel: "Cancelar", sure: "¿Seguro? Pulsa otra vez", block: n => `Bloquear a ${n}`, blockedOk: "Bloqueado: sus comentarios ya no se ven.", blockedNote: "Tu cuenta no puede publicar comentarios.", moderation: "Moderación", isBlocked: "Bloqueado", noBlocked: "No has bloqueado a nadie.", unblock: "Desbloquear", loginToSave: "Guardado en este navegador. Entra o crea una cuenta para conservarlo y verlo en cualquier dispositivo.", account: "Mi cuenta", club: "Club", nComments: n => `${n} comentario${n === 1 ? "" : "s"}`,
       login: "Entrar", signup: "Crear cuenta", email: "Email", password: "Contraseña", pwHint: "Mínimo 8 caracteres", dname: "Nombre que verán los demás",
       forgot: "¿Has olvidado la contraseña?", sendReset: "Enviar enlace", resetSent: "Te hemos enviado un email con un enlace para elegir otra contraseña.",
       newPw: "Nueva contraseña", savePw: "Guardar contraseña", pwSaved: "Contraseña cambiada.", checkMail: "Te hemos enviado un email para confirmar tu cuenta. Ábrelo y vuelve aquí.",
@@ -1090,7 +1095,7 @@ footer a { color: inherit; }
       yourReview: "Tu nota y comentario", commentPh: "¿Qué te pareció? (opcional)", saveReview: "Guardar", deleteReview: "Borrar",
       loginToReview: "Entra para puntuarla y comentarla.", comments: "Comentarios del club", noComments: "Aún no hay comentarios.", reviewSaved: "Guardado.",
       needStars: "Elige las estrellas o escribe un comentario.", seeOn: "Ver en", noSessDay: "No hay sesiones con los filtros actuales." },
-    en: { signIn: "Sign in", loginToSave: "Saved in this browser. Sign in or create an account to keep it and see it on any device.", account: "My account", club: "Club", nComments: n => `${n} comment${n === 1 ? "" : "s"}`,
+    en: { signIn: "Sign in", reply: "Reply", replyPh: n => `Reply to ${n}…`, send: "Send", cancel: "Cancel", sure: "Sure? Click again", block: n => `Block ${n}`, blockedOk: "Blocked: their comments are now hidden.", blockedNote: "Your account can't post comments.", moderation: "Moderation", isBlocked: "Blocked", noBlocked: "You haven't blocked anyone.", unblock: "Unblock", loginToSave: "Saved in this browser. Sign in or create an account to keep it and see it on any device.", account: "My account", club: "Club", nComments: n => `${n} comment${n === 1 ? "" : "s"}`,
       login: "Sign in", signup: "Create account", email: "Email", password: "Password", pwHint: "At least 8 characters", dname: "Name others will see",
       forgot: "Forgot your password?", sendReset: "Send link", resetSent: "We've emailed you a link to choose a new password.",
       newPw: "New password", savePw: "Save password", pwSaved: "Password changed.", checkMail: "We've emailed you a link to confirm your account. Open it and come back here.",
@@ -1103,7 +1108,7 @@ footer a { color: inherit; }
       yourReview: "Your rating and comment", commentPh: "What did you think? (optional)", saveReview: "Save", deleteReview: "Delete",
       loginToReview: "Sign in to rate and comment.", comments: "Club comments", noComments: "No comments yet.", reviewSaved: "Saved.",
       needStars: "Pick some stars or write a comment.", seeOn: "See on", noSessDay: "No screenings with the current filters." },
-    fr: { signIn: "Connexion", loginToSave: "Enregistré dans ce navigateur. Connectez-vous ou créez un compte pour le garder sur tous vos appareils.", account: "Mon compte", club: "Club", nComments: n => `${n} commentaire${n === 1 ? "" : "s"}`,
+    fr: { signIn: "Connexion", reply: "Répondre", replyPh: n => `Répondre à ${n}…`, send: "Envoyer", cancel: "Annuler", sure: "Sûr ? Cliquez encore", block: n => `Bloquer ${n}`, blockedOk: "Bloqué : ses commentaires sont masqués.", blockedNote: "Votre compte ne peut pas publier de commentaires.", moderation: "Modération", isBlocked: "Bloqué", noBlocked: "Vous n'avez bloqué personne.", unblock: "Débloquer", loginToSave: "Enregistré dans ce navigateur. Connectez-vous ou créez un compte pour le garder sur tous vos appareils.", account: "Mon compte", club: "Club", nComments: n => `${n} commentaire${n === 1 ? "" : "s"}`,
       login: "Se connecter", signup: "Créer un compte", email: "E-mail", password: "Mot de passe", pwHint: "8 caractères minimum", dname: "Nom visible par les autres",
       forgot: "Mot de passe oublié ?", sendReset: "Envoyer le lien", resetSent: "Nous vous avons envoyé un lien pour choisir un nouveau mot de passe.",
       newPw: "Nouveau mot de passe", savePw: "Enregistrer", pwSaved: "Mot de passe modifié.", checkMail: "Nous vous avons envoyé un e-mail pour confirmer votre compte. Ouvrez-le puis revenez ici.",
@@ -1121,7 +1126,7 @@ footer a { color: inherit; }
 
   const CFG = (() => { try { return JSON.parse($("config").textContent || "{}"); } catch (e) { return {}; } })();
   const sb = CFG.supabase_url && CFG.supabase_anon_key && window.supabase ? window.supabase.createClient(CFG.supabase_url, CFG.supabase_anon_key) : null;
-  let user = null, profile = null, reviews = new Map();
+  let user = null, profile = null, reviews = new Map(), replies = new Map();
   const filmKey = f => String(f.id);
   function clubOf(f) {
     const rs = reviews.get(filmKey(f)) || [], st = rs.filter(r => r.stars);
@@ -1129,8 +1134,13 @@ footer a { color: inherit; }
   }
   async function loadReviews() {
     if (!sb) return;
-    const { data, error } = await sb.from("reviews").select("film_key,film_title,stars,comment,updated_at,user_id,profiles(display_name)").order("updated_at", { ascending: false }).limit(5000);
+    const safe = q => Promise.resolve(q).catch(() => ({ data: null, error: true }));      // replies table may not exist yet
+    const [{ data, error }, rp] = await Promise.all([
+      safe(sb.from("reviews").select("id,film_key,film_title,stars,comment,updated_at,user_id,profiles(display_name)").order("updated_at", { ascending: false }).limit(5000)),
+      safe(sb.from("replies").select("id,review_id,body,created_at,user_id,profiles(display_name)").order("created_at", { ascending: true }).limit(10000))]);
     if (error || !data) return;
+    replies = new Map();
+    ((rp && rp.data) || []).forEach(x => { if (!replies.has(x.review_id)) replies.set(x.review_id, []); replies.get(x.review_id).push(x); });
     reviews = new Map();
     data.forEach(r => { if (!reviews.has(r.film_key)) reviews.set(r.film_key, []); reviews.get(r.film_key).push(r); });
     render(); refreshPanel();
@@ -1149,7 +1159,7 @@ footer a { color: inherit; }
   }
   async function afterSignIn() {
     const [{ data: p }, { data: st }] = await Promise.all([
-      sb.from("profiles").select("id,display_name,email_alerts").eq("id", user.id).maybeSingle(),
+      sb.from("profiles").select("*").eq("id", user.id).maybeSingle(),
       sb.from("user_state").select("*").eq("user_id", user.id).maybeSingle()]);
     profile = p;
     if (st) {                                       // lists: account and this browser combined; preferences: the account's
@@ -1165,6 +1175,11 @@ footer a { color: inherit; }
       state.alertWl = pr.alert_watchlist !== false;
     }
     saveLocal(); syncUp(); fillFilterOptions(); renderAcct(); render(); refreshPanel();
+  }
+  async function refreshProfile() {                      // e.g. after a refused post: maybe the member was blocked meanwhile
+    if (!sb || !user) return;
+    const { data } = await sb.from("profiles").select("*").eq("id", user.id).maybeSingle();
+    if (data) profile = data;
   }
   function renderAcct() {
     if (!sb) return;
@@ -1211,7 +1226,17 @@ footer a { color: inherit; }
           <form class="form" id="nameForm" novalidate><label>${T("dname")}<input id="aName" maxlength="40" value="${esc(profile ? profile.display_name : "")}"></label><div><button class="btn" type="submit">${T("saveName")}</button></div></form></div>
           <div class="form"><label class="check"><input type="checkbox" id="aAlerts" ${!profile || profile.email_alerts ? "checked" : ""}> ${T("alertsOn")}</label>
           <label class="check"><input type="checkbox" id="aAlertWl" ${state.alertWl !== false ? "checked" : ""}> ${T("alertWl")}</label></div>
+          ${profile && profile.is_admin ? `<div><h4>${T("moderation")}</h4><div id="blockedList"><p class="note">…</p></div></div>` : ""}
           <div><button class="btn ghost" type="button" id="aOut">${T("signOut")}</button></div>`;
+        if (profile && profile.is_admin) {
+          sb.from("profiles").select("id,display_name").eq("blocked", true).then(({ data }) => {
+            const el = $("blockedList"); if (!el) return;
+            el.innerHTML = data && data.length ? data.map(p => `<div class="disc"><div><b>${esc(p.display_name)}</b><small>${T("isBlocked")}</small></div><button type="button" data-unblock="${p.id}">${T("unblock")}</button></div>`).join("") : `<p class="note">${T("noBlocked")}</p>`;
+            el.querySelectorAll("[data-unblock]").forEach(b => b.addEventListener("click", async () => {
+              await sb.rpc("set_blocked", { target: b.dataset.unblock, value: false }); await loadReviews(); draw();
+            }));
+          });
+        }
         $("nameForm").addEventListener("submit", async e => {
           e.preventDefault(); const n = $("aName").value.trim(); if (!n) { err = T("errName"); msg = ""; return draw(); }
           const { error } = await sb.from("profiles").update({ display_name: n }).eq("id", user.id);
@@ -1275,7 +1300,7 @@ footer a { color: inherit; }
   // ---------- film page: details, sessions, club stars and comments ----------
   const starsTxt = n => "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n);
   function openFilm(i) {
-    let draftStars = null, draftText = null, msg = "", err = "";
+    let draftStars = null, draftText = null, msg = "", err = "", replyOpen = null, confirmKey = null;
     showPanel({ redraw: function draw() {
       const f = D.films[i], key = filmKey(f), rs = reviews.get(key) || [], mine = user ? rs.find(r => r.user_id === user.id) : null, club = clubOf(f);
       if (draftStars === null) draftStars = mine ? mine.stars || 0 : 0;
@@ -1290,13 +1315,28 @@ footer a { color: inherit; }
       const byC = new Map(); ss.forEach(s => { if (!byC.has(s[1])) byC.set(s[1], []); byC.get(s[1]).push(s); });
       const sess = [...byC.entries()].sort((a, b) => (isFav(b[0]) - isFav(a[0])) || D.cinemas[a[0]].n.localeCompare(D.cinemas[b[0]].n, "es")).map(([cid, list]) =>
         `<div class="cine"><div class="cname"><button class="clink" type="button" data-cine="${cid}">${esc(D.cinemas[cid].n)}</button></div><div class="times">${chipsHtml(list.sort((a, b) => (a[2] + a[3]).localeCompare(b[2] + b[3])), state.day === "all")}</div></div>`).join("");
-      const form = !sb ? "" : user ? `<form class="form review" id="revForm" novalidate>
+      const isAdmin = !!(profile && profile.is_admin), blocked = !!(profile && profile.blocked);
+      const nameOf = x => x.profiles ? x.profiles.display_name : "";
+      const actions = (type, item) => {
+        const own = user && item.user_id === user.id, out = [];
+        if (type === "rev" && user && !blocked) out.push(`<button class="more" type="button" data-reply="${item.id}">${T("reply")}</button>`);
+        if (own || isAdmin) out.push(`<button class="more danger" type="button" data-del="${type}:${item.id}">${confirmKey === "del-" + type + "-" + item.id ? T("sure") : T("deleteReview")}</button>`);
+        if (isAdmin && !own) out.push(`<button class="more danger" type="button" data-block="${item.user_id}">${confirmKey === "blk-" + item.user_id ? T("sure") : T("block")(nameOf(item))}</button>`);
+        return out.length ? `<div class="ractions">${out.join("")}</div>` : "";
+      };
+      const form = !sb ? "" : user && blocked ? `<p class="note">${T("blockedNote")}</p>` : user ? `<form class="form review" id="revForm" novalidate>
           <div class="starpick" role="group" aria-label="${esc(T("yourReview"))}">${[1, 2, 3, 4, 5].map(n => `<button type="button" data-star="${n}" aria-pressed="${n <= draftStars}" aria-label="${n}">★</button>`).join("")}</div>
           <textarea id="revText" rows="3" maxlength="2000" placeholder="${esc(T("commentPh"))}">${esc(draftText)}</textarea>
           <div class="row2"><button class="btn" type="submit">${T("saveReview")}</button>${mine ? `<button class="btn ghost" type="button" id="revDel">${T("deleteReview")}</button>` : ""}</div>
           ${msg ? `<p class="okmsg">${esc(msg)}</p>` : ""}${err ? `<p class="err">${esc(err)}</p>` : ""}</form>`
         : `<p class="note">${T("loginToReview")} <button class="more" type="button" id="toLogin">${T("signIn")}</button></p>`;
-      const list = rs.filter(r => r.comment && r.comment.trim() || r.stars).map(r => `<div class="rev"><div><b>${esc(r.profiles ? r.profiles.display_name : "")}</b> ${r.stars ? `<span class="rstars" aria-label="${r.stars}/5">${starsTxt(r.stars)}</span>` : ""} <span class="meta">${new Date(r.updated_at).toLocaleDateString(lang)}</span></div>${r.comment ? `<p>${esc(r.comment)}</p>` : ""}</div>`).join("");
+      const list = rs.filter(r => r.comment && r.comment.trim() || r.stars).map(r => `<div class="rev">
+          <div><b>${esc(nameOf(r))}</b> ${r.stars ? `<span class="rstars" aria-label="${r.stars}/5">${starsTxt(r.stars)}</span>` : ""} <span class="meta">${new Date(r.updated_at).toLocaleDateString(lang)}</span></div>
+          ${r.comment ? `<p>${esc(r.comment)}</p>` : ""}${actions("rev", r)}
+          ${(replies.get(r.id) || []).map(x => `<div class="reply"><div><b>${esc(nameOf(x))}</b> <span class="meta">${new Date(x.created_at).toLocaleDateString(lang)}</span></div><p>${esc(x.body)}</p>${actions("rep", x)}</div>`).join("")}
+          ${replyOpen === r.id ? `<form class="form replyform" data-review="${r.id}" novalidate><textarea id="replyText" rows="2" maxlength="1000" placeholder="${esc(T("replyPh")(nameOf(r)))}"></textarea>
+            <div class="row2"><button class="btn" type="submit">${T("send")}</button><button class="more" type="button" data-reply="0">${T("cancel")}</button></div></form>` : ""}
+        </div>`).join("");
       const tr = isTracked(f);
       $("panelTitle").innerHTML = `${esc(f.t)}<div class="sub">${meta}</div>`;
       $("panelBody").innerHTML = `
@@ -1309,6 +1349,34 @@ footer a { color: inherit; }
         ${sb ? `<div><h4>${T("comments")}</h4>${list || `<p class="note">${T("noComments")}</p>`}</div>` : ""}
         <div><h4>${T("sessionsH")}${state.day !== "all" ? " · " + dayLabel(state.day).replace(/<[^>]+>/g, "") : ""}</h4><div class="sessions-panel">${sess || `<p class="note">${T("noSessDay")}</p>`}</div></div>`;
       const tl = $("toLogin"); if (tl) tl.addEventListener("click", () => openAccount("login"));
+      const keepDraft = () => { const t = $("revText"); if (t) draftText = t.value; };
+      $("panelBody").querySelectorAll("[data-reply]").forEach(b => b.addEventListener("click", () => {
+        keepDraft(); replyOpen = +b.dataset.reply || null; confirmKey = null; draw(); const t = $("replyText"); if (t) t.focus(); }));
+      const rpf = $("panelBody").querySelector(".replyform");
+      if (rpf) rpf.addEventListener("submit", async e => {
+        e.preventDefault(); keepDraft(); const body = $("replyText").value.trim(); if (!body) return;
+        const { error } = await sb.from("replies").insert({ review_id: +rpf.dataset.review, user_id: user.id, body });
+        if (error) { await refreshProfile(); err = profile && profile.blocked ? "" : T("errGeneric"); msg = ""; replyOpen = profile && profile.blocked ? null : replyOpen; }
+        else { replyOpen = null; err = ""; await loadReviews(); }
+        draw();
+      });
+      $("panelBody").querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async () => {   // second click confirms
+        keepDraft(); const [type, id] = b.dataset.del.split(":"), k = "del-" + type + "-" + id;
+        if (confirmKey !== k) { confirmKey = k; return draw(); }
+        confirmKey = null;
+        const { error } = await sb.from(type === "rev" ? "reviews" : "replies").delete().eq("id", +id);
+        if (error) { err = T("errGeneric"); msg = ""; }
+        else { if (type === "rev" && mine && mine.id === +id) { draftStars = 0; draftText = ""; } await loadReviews(); }
+        draw();
+      }));
+      $("panelBody").querySelectorAll("[data-block]").forEach(b => b.addEventListener("click", async () => {
+        keepDraft(); const uid = b.dataset.block, k = "blk-" + uid;
+        if (confirmKey !== k) { confirmKey = k; return draw(); }
+        confirmKey = null;
+        const { error } = await sb.rpc("set_blocked", { target: uid, value: true });
+        if (error) { err = T("errGeneric"); msg = ""; } else { msg = T("blockedOk"); err = ""; await loadReviews(); }
+        draw();
+      }));
       $("panelBody").querySelectorAll("[data-star]").forEach(b => b.addEventListener("click", () => {
         draftText = $("revText").value; const n = +b.dataset.star; draftStars = draftStars === n ? 0 : n; msg = err = ""; draw(); }));
       const rf = $("revForm");
@@ -1317,7 +1385,7 @@ footer a { color: inherit; }
         if (!draftStars && !draftText) { err = T("needStars"); msg = ""; return draw(); }
         const { error } = await sb.from("reviews").upsert({ user_id: user.id, film_key: key, film_title: f.t + (f.y ? " (" + f.y + ")" : ""),
           stars: draftStars || null, comment: draftText || null, updated_at: new Date().toISOString() }, { onConflict: "user_id,film_key" });
-        if (error) { err = T("errGeneric"); msg = ""; } else { msg = T("reviewSaved"); err = ""; await loadReviews(); }
+        if (error) { await refreshProfile(); err = profile && profile.blocked ? "" : T("errGeneric"); msg = ""; } else { msg = T("reviewSaved"); err = ""; await loadReviews(); }
         draw();
       });
       const del = $("revDel");
