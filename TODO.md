@@ -3,10 +3,10 @@
 Order chosen 2026-11-02. Tick items off as they ship; add the date.
 
 ## In progress
-- [~] **v2 published 2026-11-02 (degraded)**: built WITHOUT Filmaffinity (429 block): 23 cinemas from eCartelera + own sites, ratings IMDb/Letterboxd/"Media" only. One Filmaffinity attempt scheduled ~13:50 (`data/fa.log`); when it succeeds: `BUTACA_NO_FA_SEARCH` unset, rerun build_data → enrich → enrich_wikidata → render_page, republish (expect ~50 cinemas, ~4,000 sessions, FA ratings back).
+- [x] **v2 published 2026-11-02 (degraded)**: built WITHOUT Filmaffinity (429 block): 23 cinemas from eCartelera + own sites, ratings IMDb/Letterboxd/"Media" only. One Filmaffinity attempt scheduled ~13:50 (`data/fa.log`); when it succeeds: `BUTACA_NO_FA_SEARCH` unset, rerun build_data → enrich → enrich_wikidata → render_page, republish (expect ~50 cinemas, ~4,000 sessions, FA ratings back).
 
 ## Reliability first
-1. [ ] **Daily automatic update**: GitHub repo + GitHub Action running `code/run_all.sh` each morning, hosted on GitHub Pages. Public repo + Pages chosen 2026-11-02; Filmaffinity kept, once a day.
+1. [x] 2026-11-03 **Daily automatic update**: live at https://giraudirene.github.io/vamos-al-cine/ (repo giraudirene/vamos-al-cine, Action 05:30 UTC). First run: 53 cinemas, 97 films, 3,802 sessions; Filmaffinity and Letterboxd both worked from GitHub.
 2. [x] **Backup sources** (2026-11-02): every scraper keeps the previous file when its source fails; build_data uses eCartelera for sessions when Filmaffinity data is >36 h old; refuses to write <300 sessions.
 3. [ ] **Full week of showtimes**: Filmaffinity shows ~3 days per cinema; the rest sits behind "ver más días" (AJAX, handler in an external FA script). Per film × cinema it would be ~1,800 requests/day = blocked. Test instead a per-film Madrid showtimes page (~100 requests/day for every cinema and day) once the 429 block lifts.
 
