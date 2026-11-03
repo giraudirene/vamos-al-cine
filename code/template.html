@@ -218,7 +218,9 @@ footer a { color: inherit; }
   @keyframes slide { from { transform: translateX(16px); } to { transform: none; } }
 }
 
-.lang { display: inline-flex; gap: 2px; margin-left: auto; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--surface); }
+.hdr-right { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.btn.acct { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; padding: 8px 18px; }
+.lang { display: inline-flex; gap: 2px; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--surface); }
 .lang button { border: 0; background: none; padding: 4px 10px; font-size: 12px; letter-spacing: .06em; cursor: pointer; }
 .lang button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
 .pill.tog[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
@@ -247,7 +249,7 @@ footer a { color: inherit; }
 .ftitle:hover { color: var(--accent); }
 .poster[data-film] { cursor: pointer; }
 .tlink.small { font-size: 12.5px; font-weight: 600; }
-.pill.acct { border-color: var(--accent); color: var(--accent); }
+
 .fhead { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px; align-items: start; }
 .fhead img { width: 96px; border-radius: 4px; }
 .fhead p { margin: 0 0 8px; }
@@ -259,6 +261,7 @@ footer a { color: inherit; }
 .rev p { margin: 4px 0 0; white-space: pre-line; }
 .rstars { color: var(--fav); letter-spacing: 1px; }
 .okmsg { font-size: 13px; color: var(--deal); }
+.intro { font-size: 14px; margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--vo-bg); color: var(--ink); }
 .check { display: flex !important; grid-template-columns: none; align-items: center; gap: 8px; color: var(--ink) !important; font-size: 14px !important; }
 .check input { width: auto !important; }
 .tabs { margin-bottom: 4px; }
@@ -267,7 +270,7 @@ footer a { color: inherit; }
   .calrow summary { grid-template-columns: minmax(0, 1fr); }
   .calrow .meta { grid-column: 1; }
   .calrow ul { margin-left: 0; }
-  .lang { margin-left: 0; }
+  .hdr-right { margin-left: 0; width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
 }
 </style>
 
@@ -275,7 +278,10 @@ footer a { color: inherit; }
   <div class="brand">
     <h1>Vamos al cine<span>.</span></h1>
     <p data-i18n="tagline"></p>
-    <div class="lang" role="group" aria-label="Idioma / Language"><button type="button" data-lang="es">ES</button><button type="button" data-lang="en">EN</button><button type="button" data-lang="fr">FR</button></div>
+    <div class="hdr-right">
+      <button class="btn acct" id="acct" type="button" hidden></button>
+      <div class="lang" role="group" aria-label="Idioma / Language"><button type="button" data-lang="es">ES</button><button type="button" data-lang="en">EN</button><button type="button" data-lang="fr">FR</button></div>
+    </div>
   </div>
   <div class="stamp" id="stamp"></div>
 </header>
@@ -292,7 +298,6 @@ footer a { color: inherit; }
         <button class="pill" id="openDir" type="button" data-i18n="cinemas"></button>
         <button class="pill" id="openTrack" type="button"></button>
         <button class="pill" id="openDisc" type="button"></button>
-        <button class="pill acct" id="acct" type="button" hidden></button>
       </div>
     </div>
     <div class="row2">
@@ -600,14 +605,14 @@ footer a { color: inherit; }
     favs: [...state.favs], discounts: state.discounts, track: state.track, wl: state.wl, near: state.near, radius: state.radius, topic: state.topic })); } catch (e) {} };
 
   const isFav = c => state.favs.has(D.cinemas[c].n);
-  function toggleFav(c) { const n = D.cinemas[c].n; state.favs.has(n) ? state.favs.delete(n) : state.favs.add(n); if (!state.favs.size) state.favOnly = false; save(); render(); refreshPanel(); }
+  function toggleFav(c) { const n = D.cinemas[c].n, adding = !state.favs.has(n); adding ? state.favs.add(n) : state.favs.delete(n); if (!state.favs.size) state.favOnly = false; save(); render(); refreshPanel(); if (adding) askLogin(); }
 
   // tracked films and watchlist: matched by any title (Spanish, English, original) and, for the watchlist, year ± 1
   const trackKeys = () => new Set(state.track.map(t => norm(t)));
   const isTracked = f => { const k = trackKeys(); return f.keys.some(x => k.has(x)); };
   function toggleTrack(f) {
     if (isTracked(f)) state.track = state.track.filter(t => !f.keys.includes(norm(t)));
-    else state.track.push(f.t);
+    else { state.track.push(f.t); askLogin(); }
     save(); render(); refreshPanel();
   }
   const inWatchlist = f => state.wl.some(w => f.keys.includes(norm(w.n)) && (!w.y || !f.y || Math.abs(w.y - f.y) <= 1));
@@ -820,7 +825,7 @@ footer a { color: inherit; }
           <div class="sessions">${rows}${more}</div>
         </article>`;
       }).join("");
-    const tq = $("trackQuery"); if (tq) tq.addEventListener("click", () => { state.track.push(rawQ); save(); $("q").value = ""; state.q = ""; render(); openTracking(); });
+    const tq = $("trackQuery"); if (tq) tq.addEventListener("click", () => { state.track.push(rawQ); save(); $("q").value = ""; state.q = ""; render(); if (!askLogin()) openTracking(); });
 
     // today's festival sessions
     const ev = D.events.filter(e => e.date >= todayIso && (state.day === "all" || e.date === state.day) && hits(e.t + " " + e.cyc + " " + e.sec + " " + e.w, q));
@@ -999,7 +1004,7 @@ footer a { color: inherit; }
         const err = !name ? T("errName") : !(value >= 0) ? T("errVal") : kind === "pct" && value > 100 ? T("errPct") : !days.length ? T("errDays") : "";
         if (err) { $("dErr").textContent = err; $("dErr").hidden = false; return; }
         state.discounts.push({ name, scope: $("dScope").value, kind, value, days: days.length === 7 ? [] : days });
-        save(); render(); preCinema = null; draw();
+        save(); render(); preCinema = null; draw(); askLogin();
       });
     } });
   }
@@ -1063,7 +1068,7 @@ footer a { color: inherit; }
       $("trackForm").addEventListener("submit", e => { e.preventDefault(); const t = $("tName").value.trim(); if (t && !state.track.some(x => norm(x) === norm(t))) { state.track.push(t); save(); render(); } draw(); });
       $("wlFile").addEventListener("change", async e => {
         const file = e.target.files[0]; if (!file) return;
-        try { state.wl = await readWatchlist(file); save(); render(); draw(); }
+        try { state.wl = await readWatchlist(file); save(); render(); draw(); askLogin(); }
         catch (err) { $("wlErr").textContent = T("wlErr"); $("wlErr").hidden = false; }
       });
       const wc = $("wlClear"); if (wc) wc.addEventListener("click", () => { state.wl = []; save(); render(); draw(); });
@@ -1072,7 +1077,7 @@ footer a { color: inherit; }
 
   // ---------- accounts, saved choices and reviews (Supabase) ----------
   const LA = {
-    es: { signIn: "Entrar", account: "Mi cuenta", club: "Club", nComments: n => `${n} comentario${n === 1 ? "" : "s"}`,
+    es: { signIn: "Entrar", loginToSave: "Guardado en este navegador. Entra o crea una cuenta para conservarlo y verlo en cualquier dispositivo.", account: "Mi cuenta", club: "Club", nComments: n => `${n} comentario${n === 1 ? "" : "s"}`,
       login: "Entrar", signup: "Crear cuenta", email: "Email", password: "Contraseña", pwHint: "Mínimo 8 caracteres", dname: "Nombre que verán los demás",
       forgot: "¿Has olvidado la contraseña?", sendReset: "Enviar enlace", resetSent: "Te hemos enviado un email con un enlace para elegir otra contraseña.",
       newPw: "Nueva contraseña", savePw: "Guardar contraseña", pwSaved: "Contraseña cambiada.", checkMail: "Te hemos enviado un email para confirmar tu cuenta. Ábrelo y vuelve aquí.",
@@ -1085,7 +1090,7 @@ footer a { color: inherit; }
       yourReview: "Tu nota y comentario", commentPh: "¿Qué te pareció? (opcional)", saveReview: "Guardar", deleteReview: "Borrar",
       loginToReview: "Entra para puntuarla y comentarla.", comments: "Comentarios del club", noComments: "Aún no hay comentarios.", reviewSaved: "Guardado.",
       needStars: "Elige las estrellas o escribe un comentario.", seeOn: "Ver en", noSessDay: "No hay sesiones con los filtros actuales." },
-    en: { signIn: "Sign in", account: "My account", club: "Club", nComments: n => `${n} comment${n === 1 ? "" : "s"}`,
+    en: { signIn: "Sign in", loginToSave: "Saved in this browser. Sign in or create an account to keep it and see it on any device.", account: "My account", club: "Club", nComments: n => `${n} comment${n === 1 ? "" : "s"}`,
       login: "Sign in", signup: "Create account", email: "Email", password: "Password", pwHint: "At least 8 characters", dname: "Name others will see",
       forgot: "Forgot your password?", sendReset: "Send link", resetSent: "We've emailed you a link to choose a new password.",
       newPw: "New password", savePw: "Save password", pwSaved: "Password changed.", checkMail: "We've emailed you a link to confirm your account. Open it and come back here.",
@@ -1098,7 +1103,7 @@ footer a { color: inherit; }
       yourReview: "Your rating and comment", commentPh: "What did you think? (optional)", saveReview: "Save", deleteReview: "Delete",
       loginToReview: "Sign in to rate and comment.", comments: "Club comments", noComments: "No comments yet.", reviewSaved: "Saved.",
       needStars: "Pick some stars or write a comment.", seeOn: "See on", noSessDay: "No screenings with the current filters." },
-    fr: { signIn: "Connexion", account: "Mon compte", club: "Club", nComments: n => `${n} commentaire${n === 1 ? "" : "s"}`,
+    fr: { signIn: "Connexion", loginToSave: "Enregistré dans ce navigateur. Connectez-vous ou créez un compte pour le garder sur tous vos appareils.", account: "Mon compte", club: "Club", nComments: n => `${n} commentaire${n === 1 ? "" : "s"}`,
       login: "Se connecter", signup: "Créer un compte", email: "E-mail", password: "Mot de passe", pwHint: "8 caractères minimum", dname: "Nom visible par les autres",
       forgot: "Mot de passe oublié ?", sendReset: "Envoyer le lien", resetSent: "Nous vous avons envoyé un lien pour choisir un nouveau mot de passe.",
       newPw: "Nouveau mot de passe", savePw: "Enregistrer", pwSaved: "Mot de passe modifié.", checkMail: "Nous vous avons envoyé un e-mail pour confirmer votre compte. Ouvrez-le puis revenez ici.",
@@ -1188,12 +1193,19 @@ footer a { color: inherit; }
   }
   $("acct").addEventListener("click", () => openAccount());
 
-  function openAccount(mode) {
+  let askedThisVisit = false;
+  function askLogin() {                                   // returns true when it opened the sign-in panel
+    if (!sb || user || askedThisVisit) return false;
+    askedThisVisit = true;
+    openAccount("login", T("loginToSave"));
+    return true;
+  }
+  function openAccount(mode, intro) {
     let view = mode || (user ? "me" : "login"), msg = "", err = "";
     showPanel({ redraw: function draw() {
       if (user && view !== "recover") view = "me";
       $("panelTitle").innerHTML = `${user ? T("account") : T("signIn")}<div class="sub">${T("acctSub")}</div>`;
-      const note = (msg ? `<p class="okmsg">${esc(msg)}</p>` : "") + (err ? `<p class="err">${esc(err)}</p>` : "");
+      const note = (intro && !user ? `<p class="intro">${esc(intro)}</p>` : "") + (msg ? `<p class="okmsg">${esc(msg)}</p>` : "") + (err ? `<p class="err">${esc(err)}</p>` : "");
       if (view === "me") {
         $("panelBody").innerHTML = `<div><p class="note">${esc(T("loggedAs")(user.email))}</p>${note}
           <form class="form" id="nameForm" novalidate><label>${T("dname")}<input id="aName" maxlength="40" value="${esc(profile ? profile.display_name : "")}"></label><div><button class="btn" type="submit">${T("saveName")}</button></div></form></div>
