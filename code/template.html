@@ -243,6 +243,26 @@ footer a { color: inherit; }
 .addt { grid-template-columns: minmax(0, 1fr) auto; align-items: end; margin-top: 10px; }
 .filebtn { display: inline-block; cursor: pointer; }
 .cinehits { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.ftitle { border: 0; background: none; padding: 0; font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; text-align: left; cursor: pointer; }
+.ftitle:hover { color: var(--accent); }
+.poster[data-film] { cursor: pointer; }
+.tlink.small { font-size: 12.5px; font-weight: 600; }
+.pill.acct { border-color: var(--accent); color: var(--accent); }
+.fhead { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px; align-items: start; }
+.fhead img { width: 96px; border-radius: 4px; }
+.fhead p { margin: 0 0 8px; }
+.starpick { display: flex; gap: 2px; }
+.starpick button { border: 0; background: none; font-size: 26px; line-height: 1; cursor: pointer; color: var(--past); padding: 0 2px; }
+.starpick button[aria-pressed="true"] { color: var(--fav); }
+.form textarea { font: inherit; font-size: 14px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; resize: vertical; }
+.rev { border-top: 1px solid var(--line); padding-block: 10px; font-size: 14px; }
+.rev p { margin: 4px 0 0; white-space: pre-line; }
+.rstars { color: var(--fav); letter-spacing: 1px; }
+.okmsg { font-size: 13px; color: var(--deal); }
+.check { display: flex !important; grid-template-columns: none; align-items: center; gap: 8px; color: var(--ink) !important; font-size: 14px !important; }
+.check input { width: auto !important; }
+.tabs { margin-bottom: 4px; }
+.sessions-panel { display: flex; flex-direction: column; gap: 8px; }
 @media (max-width: 640px) {
   .calrow summary { grid-template-columns: minmax(0, 1fr); }
   .calrow .meta { grid-column: 1; }
@@ -272,6 +292,7 @@ footer a { color: inherit; }
         <button class="pill" id="openDir" type="button" data-i18n="cinemas"></button>
         <button class="pill" id="openTrack" type="button"></button>
         <button class="pill" id="openDisc" type="button"></button>
+        <button class="pill acct" id="acct" type="button" hidden></button>
       </div>
     </div>
     <div class="row2">
@@ -325,6 +346,8 @@ footer a { color: inherit; }
 <script type="application/json" id="data">__DATA__</script>
 <script type="application/json" id="mapdata">__MAP__</script>
 <script type="application/json" id="metrodata">__METRO__</script>
+<script type="application/json" id="config">__CONFIG__</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 (function () {
@@ -572,7 +595,8 @@ footer a { color: inherit; }
     if (typeof s.radius === "number") state.radius = s.radius;
     if (typeof s.topic === "string") state.topic = s.topic;
   } catch (e) {}
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ vose: state.vose, few: state.few, favOnly: state.favOnly, src: state.src,
+  const save = () => { saveLocal(); syncUp(); };
+  const saveLocal = () => { try { localStorage.setItem(KEY, JSON.stringify({ vose: state.vose, few: state.few, favOnly: state.favOnly, src: state.src,
     favs: [...state.favs], discounts: state.discounts, track: state.track, wl: state.wl, near: state.near, radius: state.radius, topic: state.topic })); } catch (e) {} };
 
   const isFav = c => state.favs.has(D.cinemas[c].n);
@@ -783,12 +807,14 @@ footer a { color: inherit; }
           const v = R.max === 5 ? num(R.r, 2) + "/5" : num(R.r, 1);
           return R.url ? `<a href="${esc(R.url)}" target="_blank" rel="noopener">${S.name} ${v}</a>` : `${S.name} ${v}`;
         }).filter(Boolean).join(" · ");
-        const img = f.img ? `<img class="poster" src="${f.img}" alt="" loading="lazy">` : `<div class="poster"></div>`;
+        const club = clubOf(f);
+        const clubTxt = club.n || club.comments ? `<button class="tlink small" type="button" data-film="${f.idx}">${club.n ? T("club") + " ★ " + num(club.avg, 1) + " (" + club.n + ")" : ""}${club.n && club.comments ? " · " : ""}${club.comments ? T("nComments")(club.comments) : ""}</button>` : "";
+        const img = f.img ? `<img class="poster" src="${f.img}" alt="" loading="lazy" data-film="${f.idx}">` : `<div class="poster" data-film="${f.idx}"></div>`;
         const tr = isTracked(f);
         return `<article class="film${tr ? " is-tracked" : ""}">
           <div class="rank">${k + 1}</div>${img}
-          <div class="info"><h2><a href="${esc(f.u)}" target="_blank" rel="noopener">${esc(f.t)}</a>${f.y ? `<span class="yr">${f.y}</span>` : ""}${badges(f)}</h2>
-            <div class="meta">${meta}</div><div class="meta">${people}</div>${others ? `<div class="others">${others}</div>` : ""}
+          <div class="info"><h2><button class="ftitle" type="button" data-film="${f.idx}">${esc(f.t)}</button>${f.y ? `<span class="yr">${f.y}</span>` : ""}${badges(f)}</h2>
+            <div class="meta">${meta}</div><div class="meta">${people}</div>${others || clubTxt ? `<div class="others">${[others, clubTxt].filter(Boolean).join(" · ")}</div>` : ""}
             <button class="follow" type="button" data-track="${f.idx}" aria-pressed="${tr}">${tr ? "✓ " + T("following") : "+ " + T("follow")}</button></div>
           ${stubHtml(f)}
           <div class="sessions">${rows}${more}</div>
@@ -829,6 +855,7 @@ footer a { color: inherit; }
     const f = e.target.closest("[data-fav]"); if (f) { toggleFav(+f.dataset.fav); return; }
     const c = e.target.closest("[data-cine]"); if (c) { openCinema(+c.dataset.cine); return; }
     const t = e.target.closest("[data-track]"); if (t) { toggleTrack(D.films[+t.dataset.track]); return; }
+    const fm = e.target.closest("[data-film]"); if (fm) { openFilm(+fm.dataset.film); return; }
     const fd = e.target.closest("[data-find]"); if (fd) { $("q").value = fd.dataset.find; state.q = norm(fd.dataset.find); state.day = "all"; render(); window.scrollTo({ top: 0 }); return; }
   });
 
@@ -1043,7 +1070,255 @@ footer a { color: inherit; }
     } });
   }
 
+  // ---------- accounts, saved choices and reviews (Supabase) ----------
+  const LA = {
+    es: { signIn: "Entrar", account: "Mi cuenta", club: "Club", nComments: n => `${n} comentario${n === 1 ? "" : "s"}`,
+      login: "Entrar", signup: "Crear cuenta", email: "Email", password: "Contraseña", pwHint: "Mínimo 8 caracteres", dname: "Nombre que verán los demás",
+      forgot: "¿Has olvidado la contraseña?", sendReset: "Enviar enlace", resetSent: "Te hemos enviado un email con un enlace para elegir otra contraseña.",
+      newPw: "Nueva contraseña", savePw: "Guardar contraseña", pwSaved: "Contraseña cambiada.", checkMail: "Te hemos enviado un email para confirmar tu cuenta. Ábrelo y vuelve aquí.",
+      acctSub: "Con una cuenta, tus cines, películas, watchlist y descuentos se guardan y los ves en cualquier dispositivo.",
+      loggedAs: e => "Has entrado como " + e, saveName: "Guardar nombre", saved: "Guardado", alertsOn: "Avisarme por email cuando una película que sigo entre en cartel",
+      alertWl: "Incluir también mi watchlist de Letterboxd", signOut: "Cerrar sesión", back: "Volver",
+      errLogin: "Email o contraseña incorrectos.", errConfirm: "Primero confirma tu cuenta con el enlace que te enviamos por email.", errExists: "Ya hay una cuenta con ese email. Entra o recupera la contraseña.",
+      errShort: "La contraseña necesita al menos 8 caracteres.", errName: "Escribe un nombre.", errGeneric: "No se ha podido completar. Inténtalo de nuevo en un momento.",
+      details: "Ficha", scores: "Notas", clubScore: "Nota del club", noClub: "Nadie del club la ha puntuado todavía.", sessionsH: "Sesiones",
+      yourReview: "Tu nota y comentario", commentPh: "¿Qué te pareció? (opcional)", saveReview: "Guardar", deleteReview: "Borrar",
+      loginToReview: "Entra para puntuarla y comentarla.", comments: "Comentarios del club", noComments: "Aún no hay comentarios.", reviewSaved: "Guardado.",
+      needStars: "Elige las estrellas o escribe un comentario.", seeOn: "Ver en", noSessDay: "No hay sesiones con los filtros actuales." },
+    en: { signIn: "Sign in", account: "My account", club: "Club", nComments: n => `${n} comment${n === 1 ? "" : "s"}`,
+      login: "Sign in", signup: "Create account", email: "Email", password: "Password", pwHint: "At least 8 characters", dname: "Name others will see",
+      forgot: "Forgot your password?", sendReset: "Send link", resetSent: "We've emailed you a link to choose a new password.",
+      newPw: "New password", savePw: "Save password", pwSaved: "Password changed.", checkMail: "We've emailed you a link to confirm your account. Open it and come back here.",
+      acctSub: "With an account, your cinemas, films, watchlist and discounts are saved and follow you to any device.",
+      loggedAs: e => "Signed in as " + e, saveName: "Save name", saved: "Saved", alertsOn: "Email me when a film I follow starts showing",
+      alertWl: "Include my Letterboxd watchlist too", signOut: "Sign out", back: "Back",
+      errLogin: "Wrong email or password.", errConfirm: "Confirm your account first, with the link we emailed you.", errExists: "There's already an account with that email. Sign in or reset the password.",
+      errShort: "The password needs at least 8 characters.", errName: "Type a name.", errGeneric: "That didn't work. Try again in a moment.",
+      details: "Details", scores: "Scores", clubScore: "Club score", noClub: "Nobody in the club has rated it yet.", sessionsH: "Screenings",
+      yourReview: "Your rating and comment", commentPh: "What did you think? (optional)", saveReview: "Save", deleteReview: "Delete",
+      loginToReview: "Sign in to rate and comment.", comments: "Club comments", noComments: "No comments yet.", reviewSaved: "Saved.",
+      needStars: "Pick some stars or write a comment.", seeOn: "See on", noSessDay: "No screenings with the current filters." },
+    fr: { signIn: "Connexion", account: "Mon compte", club: "Club", nComments: n => `${n} commentaire${n === 1 ? "" : "s"}`,
+      login: "Se connecter", signup: "Créer un compte", email: "E-mail", password: "Mot de passe", pwHint: "8 caractères minimum", dname: "Nom visible par les autres",
+      forgot: "Mot de passe oublié ?", sendReset: "Envoyer le lien", resetSent: "Nous vous avons envoyé un lien pour choisir un nouveau mot de passe.",
+      newPw: "Nouveau mot de passe", savePw: "Enregistrer", pwSaved: "Mot de passe modifié.", checkMail: "Nous vous avons envoyé un e-mail pour confirmer votre compte. Ouvrez-le puis revenez ici.",
+      acctSub: "Avec un compte, vos cinémas, films, watchlist et réductions sont enregistrés et vous suivent sur tous vos appareils.",
+      loggedAs: e => "Connecté en tant que " + e, saveName: "Enregistrer le nom", saved: "Enregistré", alertsOn: "M'avertir par e-mail quand un film suivi arrive à l'affiche",
+      alertWl: "Inclure aussi ma watchlist Letterboxd", signOut: "Se déconnecter", back: "Retour",
+      errLogin: "E-mail ou mot de passe incorrect.", errConfirm: "Confirmez d'abord votre compte avec le lien reçu par e-mail.", errExists: "Un compte existe déjà avec cet e-mail. Connectez-vous ou réinitialisez le mot de passe.",
+      errShort: "Le mot de passe doit faire au moins 8 caractères.", errName: "Indiquez un nom.", errGeneric: "Ça n'a pas marché. Réessayez dans un instant.",
+      details: "Fiche", scores: "Notes", clubScore: "Note du club", noClub: "Personne du club ne l'a encore notée.", sessionsH: "Séances",
+      yourReview: "Votre note et commentaire", commentPh: "Qu'en avez-vous pensé ? (facultatif)", saveReview: "Enregistrer", deleteReview: "Supprimer",
+      loginToReview: "Connectez-vous pour noter et commenter.", comments: "Commentaires du club", noComments: "Pas encore de commentaires.", reviewSaved: "Enregistré.",
+      needStars: "Choisissez des étoiles ou écrivez un commentaire.", seeOn: "Voir sur", noSessDay: "Aucune séance avec les filtres actuels." },
+  };
+  for (const k in LA) Object.assign(L[k], LA[k]);
+
+  const CFG = (() => { try { return JSON.parse($("config").textContent || "{}"); } catch (e) { return {}; } })();
+  const sb = CFG.supabase_url && CFG.supabase_anon_key && window.supabase ? window.supabase.createClient(CFG.supabase_url, CFG.supabase_anon_key) : null;
+  let user = null, profile = null, reviews = new Map();
+  const filmKey = f => String(f.id);
+  function clubOf(f) {
+    const rs = reviews.get(filmKey(f)) || [], st = rs.filter(r => r.stars);
+    return { n: st.length, avg: st.length ? st.reduce((a, r) => a + r.stars, 0) / st.length : null, comments: rs.filter(r => r.comment && r.comment.trim()).length };
+  }
+  async function loadReviews() {
+    if (!sb) return;
+    const { data, error } = await sb.from("reviews").select("film_key,film_title,stars,comment,updated_at,user_id,profiles(display_name)").order("updated_at", { ascending: false }).limit(5000);
+    if (error || !data) return;
+    reviews = new Map();
+    data.forEach(r => { if (!reviews.has(r.film_key)) reviews.set(r.film_key, []); reviews.get(r.film_key).push(r); });
+    render(); refreshPanel();
+  }
+
+  // saved choices: this browser always, the account too when signed in
+  let syncTimer = null;
+  function syncUp() {
+    if (!sb || !user) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => {
+      sb.from("user_state").upsert({ user_id: user.id, favs: [...state.favs], track: state.track, wl: state.wl, discounts: state.discounts,
+        prefs: { near: state.near, radius: state.radius, src: state.src, vose: state.vose, lang, alert_watchlist: state.alertWl !== false },
+        updated_at: new Date().toISOString() }).then(() => {}, () => {});
+    }, 700);
+  }
+  async function afterSignIn() {
+    const [{ data: p }, { data: st }] = await Promise.all([
+      sb.from("profiles").select("id,display_name,email_alerts").eq("id", user.id).maybeSingle(),
+      sb.from("user_state").select("*").eq("user_id", user.id).maybeSingle()]);
+    profile = p;
+    if (st) {                                       // lists: account and this browser combined; preferences: the account's
+      const uniq = (a, key) => { const seen = new Set(); return a.filter(x => { const k = key(x); return seen.has(k) ? false : seen.add(k); }); };
+      state.favs = new Set([...(st.favs || []), ...state.favs]);
+      state.track = uniq([...(st.track || []), ...state.track], t => norm(t));
+      state.wl = st.wl && st.wl.length ? st.wl : state.wl;
+      state.discounts = uniq([...(st.discounts || []), ...state.discounts], d => JSON.stringify(d));
+      const pr = st.prefs || {};
+      if (typeof pr.near === "string") state.near = pr.near;
+      if (pr.radius) state.radius = pr.radius;
+      if (SRC[pr.src] && !(faMissing && pr.src === "fa")) state.src = pr.src;
+      state.alertWl = pr.alert_watchlist !== false;
+    }
+    saveLocal(); syncUp(); fillFilterOptions(); renderAcct(); render(); refreshPanel();
+  }
+  function renderAcct() {
+    if (!sb) return;
+    $("acct").hidden = false;
+    $("acct").textContent = user ? "● " + (profile && profile.display_name || T("account")) : T("signIn");
+  }
+  const authError = err => {
+    const m = (err && err.message) || "";
+    return /invalid login/i.test(m) ? T("errLogin") : /not confirmed/i.test(m) ? T("errConfirm") : /already registered|already exists/i.test(m) ? T("errExists")
+      : /password/i.test(m) && /6|8|short|least/i.test(m) ? T("errShort") : T("errGeneric");
+  };
+  function initAuth() {
+    if (!sb) return;
+    renderAcct();
+    sb.auth.onAuthStateChange((event, session) => {
+      const was = user && user.id;
+      user = session ? session.user : null;
+      if (!user) profile = null;
+      // Supabase asks that no Supabase call is awaited inside this callback
+      setTimeout(() => {
+        if (event === "PASSWORD_RECOVERY") openAccount("recover");
+        if (user && user.id !== was) afterSignIn(); else { renderAcct(); render(); refreshPanel(); }
+      }, 0);
+    });
+    loadReviews();
+  }
+  $("acct").addEventListener("click", () => openAccount());
+
+  function openAccount(mode) {
+    let view = mode || (user ? "me" : "login"), msg = "", err = "";
+    showPanel({ redraw: function draw() {
+      if (user && view !== "recover") view = "me";
+      $("panelTitle").innerHTML = `${user ? T("account") : T("signIn")}<div class="sub">${T("acctSub")}</div>`;
+      const note = (msg ? `<p class="okmsg">${esc(msg)}</p>` : "") + (err ? `<p class="err">${esc(err)}</p>` : "");
+      if (view === "me") {
+        $("panelBody").innerHTML = `<div><p class="note">${esc(T("loggedAs")(user.email))}</p>${note}
+          <form class="form" id="nameForm" novalidate><label>${T("dname")}<input id="aName" maxlength="40" value="${esc(profile ? profile.display_name : "")}"></label><div><button class="btn" type="submit">${T("saveName")}</button></div></form></div>
+          <div class="form"><label class="check"><input type="checkbox" id="aAlerts" ${!profile || profile.email_alerts ? "checked" : ""}> ${T("alertsOn")}</label>
+          <label class="check"><input type="checkbox" id="aAlertWl" ${state.alertWl !== false ? "checked" : ""}> ${T("alertWl")}</label></div>
+          <div><button class="btn ghost" type="button" id="aOut">${T("signOut")}</button></div>`;
+        $("nameForm").addEventListener("submit", async e => {
+          e.preventDefault(); const n = $("aName").value.trim(); if (!n) { err = T("errName"); msg = ""; return draw(); }
+          const { error } = await sb.from("profiles").update({ display_name: n }).eq("id", user.id);
+          if (error) { err = T("errGeneric"); msg = ""; } else { profile = { ...profile, display_name: n }; msg = T("saved"); err = ""; renderAcct(); loadReviews(); }
+          draw();
+        });
+        $("aAlerts").addEventListener("change", async e => { const v = e.target.checked; await sb.from("profiles").update({ email_alerts: v }).eq("id", user.id); if (profile) profile.email_alerts = v; });
+        $("aAlertWl").addEventListener("change", e => { state.alertWl = e.target.checked; syncUp(); });
+        $("aOut").addEventListener("click", async () => { await sb.auth.signOut(); user = null; profile = null; renderAcct(); render(); closePanel(); });
+        return;
+      }
+      if (view === "recover") {
+        $("panelBody").innerHTML = `${note}<form class="form" id="pwForm" novalidate><label>${T("newPw")}<input id="aPw" type="password" autocomplete="new-password" placeholder="${esc(T("pwHint"))}"></label><div><button class="btn" type="submit">${T("savePw")}</button></div></form>`;
+        $("pwForm").addEventListener("submit", async e => {
+          e.preventDefault(); const pw = $("aPw").value; if (pw.length < 8) { err = T("errShort"); return draw(); }
+          const { error } = await sb.auth.updateUser({ password: pw });
+          if (error) { err = authError(error); msg = ""; } else { msg = T("pwSaved"); err = ""; view = "me"; }
+          draw();
+        });
+        return;
+      }
+      const tabs = `<div class="seg tabs"><button type="button" data-v="login" aria-pressed="${view === "login"}">${T("login")}</button><button type="button" data-v="signup" aria-pressed="${view === "signup"}">${T("signup")}</button></div>`;
+      if (view === "reset") {
+        $("panelBody").innerHTML = `${note}<form class="form" id="resetForm" novalidate><label>${T("email")}<input id="aEmail" type="email" autocomplete="email"></label><div><button class="btn" type="submit">${T("sendReset")}</button> <button class="more" type="button" data-v="login">${T("back")}</button></div></form>`;
+        $("resetForm").addEventListener("submit", async e => {
+          e.preventDefault();
+          const { error } = await sb.auth.resetPasswordForEmail($("aEmail").value.trim(), { redirectTo: location.origin + location.pathname });
+          if (error) { err = authError(error); msg = ""; } else { msg = T("resetSent"); err = ""; }
+          draw();
+        });
+      } else {
+        const up = view === "signup";
+        $("panelBody").innerHTML = `${tabs}${note}<form class="form" id="authForm" novalidate>
+          ${up ? `<label>${T("dname")}<input id="aName" maxlength="40" autocomplete="nickname"></label>` : ""}
+          <label>${T("email")}<input id="aEmail" type="email" autocomplete="email"></label>
+          <label>${T("password")}<input id="aPw" type="password" autocomplete="${up ? "new-password" : "current-password"}" ${up ? `placeholder="${esc(T("pwHint"))}"` : ""}></label>
+          <div><button class="btn" type="submit">${up ? T("signup") : T("login")}</button></div>
+          ${up ? "" : `<button class="more" type="button" data-v="reset">${T("forgot")}</button>`}</form>`;
+        $("authForm").addEventListener("submit", async e => {
+          e.preventDefault();
+          const email = $("aEmail").value.trim(), pw = $("aPw").value;
+          if (up) {
+            const name = $("aName").value.trim();
+            if (!name) { err = T("errName"); return draw(); }
+            if (pw.length < 8) { err = T("errShort"); return draw(); }
+            const { data, error } = await sb.auth.signUp({ email, password: pw, options: { data: { display_name: name }, emailRedirectTo: location.origin + location.pathname } });
+            if (error) { err = authError(error); msg = ""; }
+            else if (data && data.user && data.user.identities && !data.user.identities.length) { err = T("errExists"); msg = ""; }
+            else { msg = data && data.session ? "" : T("checkMail"); err = ""; }
+          } else {
+            const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+            if (error) { err = authError(error); msg = ""; } else { err = ""; msg = ""; }
+          }
+          draw();
+        });
+      }
+      $("panelBody").querySelectorAll("[data-v]").forEach(b => b.addEventListener("click", () => { view = b.dataset.v; msg = ""; err = ""; draw(); }));
+    } });
+  }
+
+  // ---------- film page: details, sessions, club stars and comments ----------
+  const starsTxt = n => "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n);
+  function openFilm(i) {
+    let draftStars = null, draftText = null, msg = "", err = "";
+    showPanel({ redraw: function draw() {
+      const f = D.films[i], key = filmKey(f), rs = reviews.get(key) || [], mine = user ? rs.find(r => r.user_id === user.id) : null, club = clubOf(f);
+      if (draftStars === null) draftStars = mine ? mine.stars || 0 : 0;
+      if (draftText === null) draftText = mine ? mine.comment || "" : "";
+      const meta = [f.y, f.c, f.rt ? f.rt + " min" : "", f.age, (f.g || []).slice(0, 3).map(g => GENRES[lang][g] || g).join(", ")].filter(Boolean).map(esc).join(" · ");
+      const scores = Object.entries(SRC).filter(([k]) => k !== "av").map(([k, S]) => {
+        const R = S.get(f); if (R.r == null) return "";
+        const v = R.max === 5 ? num(R.r, 2) + "/5" : num(R.r, 1);
+        return `<dt>${S.name}</dt><dd>${R.url ? `<a href="${esc(R.url)}" target="_blank" rel="noopener">${v}</a>` : v} <span class="meta">· ${R.v.toLocaleString(lang)} ${T("votes")}</span></dd>`;
+      }).join("");
+      const ss = filteredShows(s => s[0] === i);
+      const byC = new Map(); ss.forEach(s => { if (!byC.has(s[1])) byC.set(s[1], []); byC.get(s[1]).push(s); });
+      const sess = [...byC.entries()].sort((a, b) => (isFav(b[0]) - isFav(a[0])) || D.cinemas[a[0]].n.localeCompare(D.cinemas[b[0]].n, "es")).map(([cid, list]) =>
+        `<div class="cine"><div class="cname"><button class="clink" type="button" data-cine="${cid}">${esc(D.cinemas[cid].n)}</button></div><div class="times">${chipsHtml(list.sort((a, b) => (a[2] + a[3]).localeCompare(b[2] + b[3])), state.day === "all")}</div></div>`).join("");
+      const form = !sb ? "" : user ? `<form class="form review" id="revForm" novalidate>
+          <div class="starpick" role="group" aria-label="${esc(T("yourReview"))}">${[1, 2, 3, 4, 5].map(n => `<button type="button" data-star="${n}" aria-pressed="${n <= draftStars}" aria-label="${n}">★</button>`).join("")}</div>
+          <textarea id="revText" rows="3" maxlength="2000" placeholder="${esc(T("commentPh"))}">${esc(draftText)}</textarea>
+          <div class="row2"><button class="btn" type="submit">${T("saveReview")}</button>${mine ? `<button class="btn ghost" type="button" id="revDel">${T("deleteReview")}</button>` : ""}</div>
+          ${msg ? `<p class="okmsg">${esc(msg)}</p>` : ""}${err ? `<p class="err">${esc(err)}</p>` : ""}</form>`
+        : `<p class="note">${T("loginToReview")} <button class="more" type="button" id="toLogin">${T("signIn")}</button></p>`;
+      const list = rs.filter(r => r.comment && r.comment.trim() || r.stars).map(r => `<div class="rev"><div><b>${esc(r.profiles ? r.profiles.display_name : "")}</b> ${r.stars ? `<span class="rstars" aria-label="${r.stars}/5">${starsTxt(r.stars)}</span>` : ""} <span class="meta">${new Date(r.updated_at).toLocaleDateString(lang)}</span></div>${r.comment ? `<p>${esc(r.comment)}</p>` : ""}</div>`).join("");
+      const tr = isTracked(f);
+      $("panelTitle").innerHTML = `${esc(f.t)}<div class="sub">${meta}</div>`;
+      $("panelBody").innerHTML = `
+        <div class="fhead">${f.img ? `<img src="${f.img}" alt="">` : ""}<div>
+          ${f.d ? `<p class="meta">${T("by")} <b>${esc(f.d)}</b>${f.cast && f.cast.length ? ", " + T("with") + " " + esc(f.cast.join(", ")) : ""}</p>` : ""}
+          <p>${badges(f)}</p>
+          <button class="follow" type="button" data-track="${i}" aria-pressed="${tr}">${tr ? "✓ " + T("following") : "+ " + T("follow")}</button></div></div>
+        <div><h4>${T("scores")}</h4><dl class="kv">${scores}${sb ? `<dt>${T("clubScore")}</dt><dd>${club.n ? `<span class="rstars">${starsTxt(Math.round(club.avg))}</span> ${num(club.avg, 1)} <span class="meta">· ${club.n}</span>` : `<span class="meta">${T("noClub")}</span>`}</dd>` : ""}</dl></div>
+        ${sb ? `<div><h4>${T("yourReview")}</h4>${form}</div>` : ""}
+        ${sb ? `<div><h4>${T("comments")}</h4>${list || `<p class="note">${T("noComments")}</p>`}</div>` : ""}
+        <div><h4>${T("sessionsH")}${state.day !== "all" ? " · " + dayLabel(state.day).replace(/<[^>]+>/g, "") : ""}</h4><div class="sessions-panel">${sess || `<p class="note">${T("noSessDay")}</p>`}</div></div>`;
+      const tl = $("toLogin"); if (tl) tl.addEventListener("click", () => openAccount("login"));
+      $("panelBody").querySelectorAll("[data-star]").forEach(b => b.addEventListener("click", () => {
+        draftText = $("revText").value; const n = +b.dataset.star; draftStars = draftStars === n ? 0 : n; msg = err = ""; draw(); }));
+      const rf = $("revForm");
+      if (rf) rf.addEventListener("submit", async e => {
+        e.preventDefault(); draftText = $("revText").value.trim();
+        if (!draftStars && !draftText) { err = T("needStars"); msg = ""; return draw(); }
+        const { error } = await sb.from("reviews").upsert({ user_id: user.id, film_key: key, film_title: f.t + (f.y ? " (" + f.y + ")" : ""),
+          stars: draftStars || null, comment: draftText || null, updated_at: new Date().toISOString() }, { onConflict: "user_id,film_key" });
+        if (error) { err = T("errGeneric"); msg = ""; } else { msg = T("reviewSaved"); err = ""; await loadReviews(); }
+        draw();
+      });
+      const del = $("revDel");
+      if (del) del.addEventListener("click", async () => {
+        const { error } = await sb.from("reviews").delete().eq("user_id", user.id).eq("film_key", key);
+        if (!error) { draftStars = 0; draftText = ""; msg = ""; await loadReviews(); }
+        draw();
+      });
+    } });
+  }
+
   applyLang();
   render();
+  initAuth();
 })();
 </script>

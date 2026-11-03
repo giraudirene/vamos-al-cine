@@ -58,8 +58,14 @@ jobs:
           curl -sfSO https://datasets.imdbws.com/title.ratings.tsv.gz
           ls -la
 
-      - name: Scrape and build
+      - name: Scrape, build and send alerts
         run: bash code/run_all.sh
+        env:
+          SITE_URL: https://giraudirene.github.io/vamos-al-cine/
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
 
       - name: Show logs
         if: always()

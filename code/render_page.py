@@ -9,8 +9,10 @@ here = os.path.dirname(os.path.abspath(__file__))
 data = open(f"{d}/site_data.json", encoding="utf-8").read().replace("</", "<\\/")
 mp = open(f"{d}/map.json", encoding="utf-8").read().replace("</", "<\\/")
 metro = open(f"{d}/metro.json", encoding="utf-8").read() if os.path.exists(f"{d}/metro.json") else "[]"
+cfg_path = os.path.join(here, "..", "static", "config.json")              # public Supabase address + anon key
+config = open(cfg_path, encoding="utf-8").read() if os.path.exists(cfg_path) else "{}"
 html = (open(f"{here}/template.html", encoding="utf-8").read()
-        .replace("__DATA__", data).replace("__MAP__", mp).replace("__METRO__", metro.replace("</", "<\\/")))
+        .replace("__DATA__", data).replace("__MAP__", mp).replace("__METRO__", metro.replace("</", "<\\/")).replace("__CONFIG__", config.replace("</", "<\\/")))
 # The website needs a full HTML document; the claude.ai preview adds its own, so it gets the bare fragment.
 head, sep, body = html.partition("<header")
 page = ('<!doctype html>\n<html lang="es">\n<head>\n<meta charset="utf-8">\n'

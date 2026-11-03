@@ -16,3 +16,4 @@ python3 -I "$C/build_data.py" "$D" 2> "$D/build.log" && \
 python3 -I "$C/enrich_imdb_letterboxd.py" "$D" "$P/cache/imdb" 2> "$D/enrich.log" && \
 python3 -I "$C/enrich_wikidata.py" "$D" 2> "$D/wikidata.log"; \
 python3 -I "$C/render_page.py" "$D" "$P/site/index.html"
+python3 -I "$C/email_alerts.py" "$D" 2> "$D/email.log" || echo "Email alerts failed"
