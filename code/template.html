@@ -1,0 +1,699 @@
+<title>Vamos al cine</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a ranked marquee list. Sticky filter bar, one row per film (rank, poster, details, ticket-stub rating), sessions grouped by cinema. Side panel for cinemas and discounts. */
+:root {
+  --bg: #f6f4f1;
+  --surface: #ffffff;
+  --ink: #1d1a1f;
+  --muted: #6b6470;
+  --line: #e3dfe2;
+  --accent: #b02a37;
+  --accent-ink: #ffffff;
+  --vo: #8a5a00;
+  --vo-bg: #fbefd2;
+  --chip: #efecef;
+  --past: #b7b1b9;
+  --fav: #c98a00;
+  --deal: #1f7a4d;
+  --map-land: #efece7;
+  --map-city: #e6e2dc;
+  --map-line: #c9c3cb;
+  --map-road: #e0a458;
+  --map-water: #7fb0d6;
+  --overlay: rgba(20, 16, 22, .35);
+  --font-display: "Big Shoulders Display", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --font-body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #151217; --surface: #1f1b22; --ink: #f1ecf2; --muted: #a59eaa; --line: #332d37;
+    --accent: #f0646a; --accent-ink: #1a0b0d; --vo: #f2c46b; --vo-bg: #3a2f17; --chip: #2b262f; --past: #5d5662;
+    --fav: #f2c46b; --deal: #5fd39a; --map-land: #1b181e; --map-city: #241f28; --map-line: #3d3642; --map-road: #a8743a; --map-water: #3d6f96;
+    --overlay: rgba(0, 0, 0, .55);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #151217; --surface: #1f1b22; --ink: #f1ecf2; --muted: #a59eaa; --line: #332d37;
+  --accent: #f0646a; --accent-ink: #1a0b0d; --vo: #f2c46b; --vo-bg: #3a2f17; --chip: #2b262f; --past: #5d5662;
+  --fav: #f2c46b; --deal: #5fd39a; --map-land: #1b181e; --map-city: #241f28; --map-line: #3d3642; --map-road: #a8743a; --map-water: #3d6f96;
+  --overlay: rgba(0, 0, 0, .55);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.45; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+body.locked { overflow: hidden; }
+.wrap { max-width: 980px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+button { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+header.top { padding-block: 28px 8px; }
+.brand { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.brand h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(40px, 8vw, 64px); line-height: .9; margin: 0; letter-spacing: .01em; text-transform: uppercase; }
+.brand h1 span { color: var(--accent); }
+.brand p { margin: 0; color: var(--muted); max-width: 46ch; text-wrap: balance; }
+.stamp { color: var(--muted); font-size: 13px; margin-top: 10px; }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); padding-block: 12px; }
+.bar .wrap { display: flex; flex-direction: column; gap: 10px; }
+.days { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.days::-webkit-scrollbar { display: none; }
+.pill { font-size: 14px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 14px; cursor: pointer; white-space: nowrap; }
+.pill small { color: var(--muted); margin-left: 4px; font-variant-numeric: tabular-nums; }
+.days .pill[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.days .pill[aria-pressed="true"] small { color: inherit; opacity: .7; }
+.pill:disabled { opacity: .4; cursor: not-allowed; }
+.row2 { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.pill.vose[aria-pressed="true"] { background: var(--vo-bg); color: var(--vo); border-color: var(--vo); }
+.pill.now[aria-pressed="true"], .pill.few[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.pill.favs[aria-pressed="true"] { background: var(--fav); color: var(--bg); border-color: var(--fav); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: none; padding: 6px 12px; font-size: 14px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.seg-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.search { flex: 1 1 200px; min-width: 0; font: inherit; font-size: 14px; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.tools { margin-left: auto; display: flex; gap: 8px; }
+.count { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.pill.filt[aria-expanded="true"], .pill.filt.on { border-color: var(--ink); }
+.more-filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; }
+.more-filters label { display: grid; gap: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); min-width: 0; }
+.more-filters select { font: inherit; font-size: 14px; text-transform: none; letter-spacing: 0; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 5px 8px; max-width: 46vw; }
+.more-filters .pill { align-self: end; }
+.badge { display: inline-block; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; border: 1px solid currentColor; border-radius: 4px; padding: 0 5px; margin-left: 6px; vertical-align: 2px; font-family: var(--font-body); font-weight: 600; }
+.badge.split { color: var(--vo); }
+.badge.classic { color: var(--muted); }
+.badge.women { color: var(--deal); }
+.badge.queer { color: var(--accent); }
+#fWomen[aria-pressed="true"], #fQueer[aria-pressed="true"], #fClassic[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.dist { font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 4px; white-space: nowrap; }
+
+main { padding-block: 8px 40px; }
+.film { display: grid; grid-template-columns: 44px 72px minmax(0, 1fr) auto; gap: 4px 16px; padding-block: 20px; border-bottom: 1px solid var(--line); }
+.rank { font-family: var(--font-display); font-weight: 800; font-size: 34px; line-height: 1; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.poster { width: 72px; aspect-ratio: 2 / 3; border-radius: 4px; background: var(--chip); object-fit: cover; max-width: 100%; }
+.info { min-width: 0; }
+.info h2 { font-family: var(--font-display); font-weight: 800; font-size: 26px; line-height: 1.05; margin: 0 0 4px; text-transform: uppercase; letter-spacing: .01em; text-wrap: balance; }
+.info h2 a { color: inherit; text-decoration: none; }
+.info h2 a:hover { color: var(--accent); }
+.info h2 .yr { font-weight: 600; color: var(--muted); margin-left: 8px; font-variant-numeric: tabular-nums; }
+.meta { color: var(--muted); font-size: 13.5px; }
+.meta b { color: var(--ink); font-weight: 500; }
+.others { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+.others a { color: inherit; }
+.stub { align-self: start; text-align: center; min-width: 78px; padding: 8px 10px 6px; border: 1.5px dashed var(--accent); border-radius: 6px; color: var(--accent); text-decoration: none; }
+.stub .n { font-family: var(--font-display); font-weight: 800; font-size: 34px; line-height: 1; font-variant-numeric: tabular-nums; }
+.stub .n small { font-size: 16px; opacity: .7; }
+.stub .v { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-top: 3px; }
+.stub.none { border-color: var(--line); color: var(--muted); }
+.stub.few .n { opacity: .55; }
+.sessions { grid-column: 3 / 5; display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.cine { display: grid; grid-template-columns: minmax(0, 230px) minmax(0, 1fr); gap: 4px 12px; align-items: baseline; }
+.cname { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.star { border: 0; background: none; padding: 0 2px; cursor: pointer; color: var(--past); font-size: 15px; line-height: 1; }
+.star[aria-pressed="true"] { color: var(--fav); }
+.clink { border: 0; background: none; padding: 0; cursor: pointer; font-weight: 600; font-size: 14px; text-align: left; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.clink:hover { color: var(--accent); text-decoration-color: currentColor; }
+.price { display: block; font-size: 12px; color: var(--muted); font-weight: 400; font-variant-numeric: tabular-nums; }
+.price s { opacity: .7; }
+.price .deal { color: var(--deal); font-weight: 600; }
+.times { display: flex; flex-wrap: wrap; gap: 5px; }
+.t { font-size: 13.5px; font-variant-numeric: tabular-nums; padding: 2px 8px; border-radius: 4px; background: var(--chip); }
+.t.vo { background: var(--vo-bg); color: var(--vo); font-weight: 600; }
+.t.vo::after { content: " VO"; font-size: 10px; letter-spacing: .05em; }
+.t.past { color: var(--past); background: transparent; text-decoration: line-through; }
+.t .d { color: var(--muted); font-size: 11px; margin-right: 4px; }
+.more { font-size: 13px; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; justify-self: start; text-align: left; }
+.empty { padding: 40px 0; color: var(--muted); text-align: center; }
+
+section.fest { margin-top: 36px; }
+.fest h3 { font-family: var(--font-display); font-weight: 800; font-size: 30px; text-transform: uppercase; margin: 0 0 4px; }
+.fest > p { color: var(--muted); margin: 0 0 14px; max-width: 65ch; }
+.ev { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 2px 14px; padding-block: 12px; border-top: 1px solid var(--line); }
+.ev .when { font-variant-numeric: tabular-nums; font-weight: 600; }
+.ev .when small { display: block; color: var(--muted); font-weight: 400; font-size: 12px; }
+.ev a { color: var(--ink); font-weight: 600; text-decoration: none; }
+.ev a:hover { color: var(--accent); }
+.tag { display: inline-block; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); }
+.ev .desc { color: var(--muted); font-size: 13.5px; }
+
+footer { color: var(--muted); font-size: 13px; padding-block: 20px 40px; border-top: 1px solid var(--line); }
+footer p { max-width: 70ch; margin: 0 0 8px; }
+footer a { color: inherit; }
+
+/* side panel */
+.scrim { position: fixed; inset: 0; background: var(--overlay); z-index: 20; }
+.panel { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100%); background: var(--bg); z-index: 21; border-left: 1px solid var(--line);
+  display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-right: env(safe-area-inset-right, 0px); }
+.panel-head { display: flex; align-items: flex-start; gap: 10px; padding: 18px 20px 12px; border-bottom: 1px solid var(--line); }
+.panel-head h3 { font-family: var(--font-display); font-weight: 800; font-size: 30px; line-height: 1; margin: 0; text-transform: uppercase; flex: 1; min-width: 0; text-wrap: balance; }
+.panel-head .sub { font-size: 13px; color: var(--muted); margin-top: 4px; font-family: var(--font-body); text-transform: none; font-weight: 400; }
+.close { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; width: 34px; height: 34px; cursor: pointer; flex: none; font-size: 18px; line-height: 1; }
+.panel-body { overflow-y: auto; padding: 16px 20px 28px; display: flex; flex-direction: column; gap: 18px; }
+.panel h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+.mapbox { position: relative; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--map-land); }
+.mapbox svg { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; }
+.mapbox .zoom { position: absolute; right: 8px; top: 8px; display: flex; flex-direction: column; gap: 4px; }
+.mapbox .zoom button { width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-size: 16px; }
+.maplinks { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13.5px; margin-top: 8px; }
+.maplinks a { color: var(--accent); }
+.kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; font-size: 14px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-variant-numeric: tabular-nums; }
+.kv .deal { color: var(--deal); font-weight: 600; }
+.plist { display: flex; flex-direction: column; }
+.pfilm { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 2px 12px; padding-block: 10px; border-top: 1px solid var(--line); align-items: start; }
+.pfilm img, .pfilm .ph { width: 40px; aspect-ratio: 2 / 3; border-radius: 3px; object-fit: cover; background: var(--chip); }
+.pfilm b { font-weight: 600; }
+.pfilm .sc { font-family: var(--font-display); font-weight: 800; font-size: 22px; color: var(--accent); font-variant-numeric: tabular-nums; }
+.pfilm .times { margin-top: 4px; }
+.dir { display: flex; flex-direction: column; }
+.dir .row { display: flex; align-items: center; gap: 8px; padding-block: 8px; border-top: 1px solid var(--line); }
+.dir .row .clink { flex: 1; min-width: 0; }
+.dir .row small { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.btn { border: 1px solid var(--ink); background: var(--ink); color: var(--bg); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 14px; }
+.btn.ghost { background: var(--surface); color: var(--ink); border-color: var(--line); }
+.form { display: grid; gap: 10px; }
+.form label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.form input, .form select { font: inherit; font-size: 14px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; min-width: 0; width: 100%; }
+.form .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.wd { display: flex; gap: 4px; flex-wrap: wrap; }
+.wd label { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; color: var(--ink); background: var(--surface); cursor: pointer; }
+.wd input { width: auto; margin: 0; }
+.quick { display: flex; gap: 6px; flex-wrap: wrap; }
+.quick button { font-size: 13px; border: 1px dashed var(--line); background: none; border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+.disc { display: flex; justify-content: space-between; gap: 10px; padding-block: 10px; border-top: 1px solid var(--line); font-size: 14px; }
+.disc small { display: block; color: var(--muted); }
+.disc button { border: 0; background: none; color: var(--accent); cursor: pointer; font-size: 13px; }
+.note { font-size: 13px; color: var(--muted); }
+.err { font-size: 13px; color: var(--accent); }
+
+@media (max-width: 640px) {
+  .film { grid-template-columns: 64px minmax(0, 1fr) auto; gap: 4px 12px; }
+  .rank { display: none; }
+  .poster { width: 64px; }
+  .info h2 { font-size: 22px; }
+  .sessions { grid-column: 1 / 4; }
+  .cine { grid-template-columns: minmax(0, 1fr); }
+  .stub { min-width: 64px; padding: 6px 8px 4px; }
+  .stub .n { font-size: 28px; }
+  .tools { margin-left: 0; }
+  .panel { top: auto; height: 88%; width: 100%; border-left: 0; border-top: 1px solid var(--line); border-radius: 14px 14px 0 0; padding-left: env(safe-area-inset-left, 0px); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .film { animation: rise .25s ease-out both; }
+  .panel { animation: slide .2s ease-out both; }
+  @keyframes rise { from { transform: translateY(4px); } to { transform: none; } }
+  @keyframes slide { from { transform: translateX(16px); } to { transform: none; } }
+}
+</style>
+
+<header class="top wrap">
+  <div class="brand">
+    <h1>Vamos al cine<span>.</span></h1>
+    <p>Las películas mejor valoradas en los cines de Madrid, con sus horarios.</p>
+  </div>
+  <div class="stamp" id="stamp"></div>
+</header>
+
+<div class="bar">
+  <div class="wrap">
+    <div class="days" id="days" role="group" aria-label="Día"></div>
+    <div class="row2">
+      <span class="seg-label">Nota</span>
+      <div class="seg" id="src" role="group" aria-label="Nota de">
+        <button type="button" data-s="fa">Filmaffinity</button><button type="button" data-s="im">IMDb</button><button type="button" data-s="lb">Letterboxd</button><button type="button" data-s="av" title="Media de las tres notas (sobre 10)">Media</button>
+      </div>
+      <div class="tools">
+        <button class="pill" id="openDir" type="button">Cines</button>
+        <button class="pill" id="openDisc" type="button">Mis descuentos</button>
+      </div>
+    </div>
+    <div class="row2">
+      <button class="pill now" id="now" type="button" aria-pressed="false" title="Sesiones que empiezan en las próximas 3 horas">Empieza pronto</button>
+      <button class="pill vose" id="vose" type="button" aria-pressed="false">Solo VOSE</button>
+      <button class="pill favs" id="favs" type="button" aria-pressed="false">★ Mis cines</button>
+      <button class="pill few" id="few" type="button" aria-pressed="true" title="Oculta películas con menos de 100 votos en la nota elegida">+100 votos</button>
+      <button class="pill filt" id="filt" type="button" aria-expanded="false" aria-controls="moreFilters">Filtros</button>
+      <input class="search" id="q" type="search" placeholder="Película, director o cine" aria-label="Buscar película, director o cine">
+      <span class="count" id="count"></span>
+    </div>
+    <div class="more-filters" id="moreFilters" hidden>
+      <label>Género<select id="fGenre"><option value="">Todos</option></select></label>
+      <label>Duración<select id="fDur"><option value="0">Cualquiera</option><option value="100">Hasta 1 h 40</option><option value="120">Hasta 2 h</option><option value="150">Hasta 2 h 30</option></select></label>
+      <label>País<select id="fCountry"><option value="">Todos</option></select></label>
+      <label>Empieza desde<select id="fFrom"><option value="">Cualquier hora</option></select></label>
+      <label>Acaba antes de<select id="fUntil"><option value="">Cualquier hora</option></select></label>
+      <label id="nearWrap">Cerca del metro<select id="fNear"><option value="">Cualquier sitio</option></select></label>
+      <label>A menos de<select id="fRadius"><option value="1">1 km</option><option value="2" selected>2 km</option><option value="4">4 km</option></select></label>
+      <button class="pill" id="fWomen" type="button" aria-pressed="false" title="Según Wikidata: al menos una directora">Dirigida por mujeres</button>
+      <button class="pill" id="fQueer" type="button" aria-pressed="false" title="Según Wikidata, o sesión de un festival o ciclo queer">Cine LGTBIQ+</button>
+      <button class="pill" id="fClassic" type="button" aria-pressed="false">Solo clásicos (antes de 2000)</button>
+      <button class="pill" id="fReset" type="button">Quitar filtros</button>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <div id="list"></div>
+  <section class="fest" id="fest"></section>
+</main>
+
+<footer class="wrap">
+  <p>Horarios de Filmaffinity, de las webs de Cines Verdi y Filmoteca Española (Cine Doré), y de eCartelera para los cines que faltan. Festivales y ciclos de Cineteca Madrid (Matadero) y del Cine Doré. Notas de Filmaffinity, IMDb y Letterboxd.</p>
+  <p>Precios orientativos de eCartelera, salvo Verdi (precio por sesión de su web). Pueden estar desactualizados: compruébalos al comprar. Tus cines favoritos y descuentos se guardan solo en este navegador.</p>
+  <p>Mapa: © colaboradores de OpenStreetMap. Datos del <span id="stamp2"></span>.</p>
+</footer>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="panel" id="panel" hidden aria-modal="true" role="dialog" aria-labelledby="panelTitle">
+  <div class="panel-head"><h3 id="panelTitle"></h3><button class="close" id="close" type="button" aria-label="Cerrar">×</button></div>
+  <div class="panel-body" id="panelBody"></div>
+</aside>
+
+<script type="application/json" id="data">__DATA__</script>
+<script type="application/json" id="mapdata">__MAP__</script>
+<script type="application/json" id="metrodata">__METRO__</script>
+<script>
+(function () {
+  const D = JSON.parse(document.getElementById("data").textContent);
+  const M = JSON.parse(document.getElementById("mapdata").textContent);
+  const WD = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+  const WDL = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+  const pad = n => String(n).padStart(2, "0");
+  const iso = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  const parse = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const norm = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const eur = p => p.toFixed(2).replace(".", ",") + " €";
+  const MIN_VOTES = 100;
+  const LAT0 = 40.4168, LON0 = -3.7038, KX = Math.cos(LAT0 * Math.PI / 180) * 111.32, KY = 110.54;
+  const proj = (lat, lon) => [(lon - LON0) * KX, -(lat - LAT0) * KY];
+
+  const now = new Date(), todayIso = iso(now), nowMin = now.getHours() * 60 + now.getMinutes();
+  const dates = [...new Set(D.shows.map(s => s[2]).concat(D.events.map(e => e.date)))].sort();
+
+  // Doré festival sessions join the festival list
+  const FEST_RE = /festival|queercinemad|muestra|semana de/i;
+  D.shows.forEach(s => {
+    if (s[6] && FEST_RE.test(s[6])) {
+      const f = D.films[s[0]];
+      D.events.push({ date: s[2], times: [s[3]], t: f.t + (f.y ? " (" + f.y + ")" : ""), u: f.u, rt: f.rt, sec: "", cyc: s[6], desc: f.d ? "De " + f.d : "", w: D.cinemas[s[1]].n });
+    }
+  });
+  D.events.sort((a, b) => (a.date + a.times[0]).localeCompare(b.date + b.times[0]));
+
+  const SRC = {
+    fa: { name: "Filmaffinity", get: f => ({ r: f.r, v: f.v || 0, max: 10, url: f.u }) },
+    im: { name: "IMDb", get: f => ({ r: f.ir, v: f.iv || 0, max: 10, url: f.imdb ? "https://www.imdb.com/title/" + f.imdb + "/" : "" }) },
+    lb: { name: "Letterboxd", get: f => ({ r: f.lr, v: f.lv || 0, max: 5, url: f.lu }) },
+    av: { name: "la media", get: f => {
+      const xs = [f.r, f.ir, f.lr != null ? f.lr * 2 : null].filter(x => x != null);
+      return { r: xs.length >= 2 ? xs.reduce((a, b) => a + b, 0) / xs.length : null, v: (f.v || 0) + (f.iv || 0) + (f.lv || 0), max: 10, url: "" };
+    } },
+  };
+  const spread = f => { const xs = [f.r, f.ir, f.lr != null ? f.lr * 2 : null].filter(x => x != null); return xs.length >= 2 ? Math.max(...xs) - Math.min(...xs) : 0; };
+  const METRO = JSON.parse(document.getElementById("metrodata").textContent || "[]");
+  const GENRE_ES = { Drama: "Drama", Comedy: "Comedia", Documentary: "Documental", Animation: "Animación", Horror: "Terror", Thriller: "Thriller", Romance: "Romance",
+    Action: "Acción", Adventure: "Aventura", Crime: "Crimen", Family: "Familiar", Fantasy: "Fantasía", "Sci-Fi": "Ciencia ficción", Mystery: "Misterio",
+    History: "Historia", Biography: "Biografía", Music: "Música", Musical: "Musical", War: "Bélica", Western: "Western", Sport: "Deporte", Short: "Cortometraje" };
+  const km = (a, b) => Math.hypot((a.lon - b.lon) * KX, (a.lat - b.lat) * KY);
+
+  // ---------- per-viewer state ----------
+  const state = { day: dates.includes(todayIso) ? todayIso : dates[0], now: false, vose: false, few: true, favOnly: false, src: "fa", q: "", open: new Set(), favs: new Set(), discounts: [],
+    genre: "", dur: 0, country: "", from: "", until: "", near: "", radius: 2, classic: false, women: false, queer: false, filtOpen: false };
+  const faMissing = D.films.filter(f => f.r != null).length < D.films.length * .3;   // Filmaffinity blocked or stale today
+  if (faMissing) state.src = "av";
+  try {
+    const s = JSON.parse(localStorage.getItem("vamosalcine.v1") || "{}");
+    ["vose", "few", "favOnly"].forEach(k => { if (typeof s[k] === "boolean") state[k] = s[k]; });
+    if (SRC[s.src] && !(faMissing && s.src === "fa")) state.src = s.src;
+    if (Array.isArray(s.favs)) state.favs = new Set(s.favs);
+    if (Array.isArray(s.discounts)) state.discounts = s.discounts;
+    if (typeof s.near === "string") state.near = s.near;
+    if (typeof s.radius === "number") state.radius = s.radius;
+  } catch (e) {}
+  const save = () => { try { localStorage.setItem("vamosalcine.v1", JSON.stringify({ vose: state.vose, few: state.few, favOnly: state.favOnly, src: state.src, favs: [...state.favs], discounts: state.discounts, near: state.near, radius: state.radius })); } catch (e) {} };
+  const isFav = c => state.favs.has(D.cinemas[c].n);
+  function toggleFav(c) { const n = D.cinemas[c].n; state.favs.has(n) ? state.favs.delete(n) : state.favs.add(n); if (!state.favs.size) state.favOnly = false; save(); render(); refreshPanel(); }
+
+  // ---------- prices ----------
+  function scopeMatches(d, c) {
+    const C = D.cinemas[c];
+    return d.scope === "all" || d.scope === "chain:" + C.ch || d.scope === "cinema:" + C.n;
+  }
+  function priceFor(c, date, sessionPrice) {
+    const base = sessionPrice ?? D.cinemas[c].p ?? null;
+    const dow = parse(date).getDay();
+    let best = null;
+    for (const d of state.discounts) {
+      if (!scopeMatches(d, c) || (d.days && d.days.length && !d.days.includes(dow))) continue;
+      let p = null;
+      if (d.kind === "price") p = d.value;
+      else if (base != null && d.kind === "pct") p = base * (1 - d.value / 100);
+      else if (base != null && d.kind === "off") p = Math.max(0, base - d.value);
+      if (p != null && (base == null || p < base) && (!best || p < best.p)) best = { p, name: d.name };
+    }
+    return { base, best };
+  }
+  function priceHtml(c, list) {
+    const ps = list.map(s => priceFor(c, s[2], s[5]));
+    const bases = ps.map(x => x.base).filter(x => x != null);
+    const deals = ps.filter(x => x.best);
+    const lo = bases.length ? Math.min(...bases) : null, hi = bases.length ? Math.max(...bases) : null;
+    const baseTxt = lo == null ? "" : (lo === hi ? eur(lo) : eur(lo) + "–" + eur(hi));
+    if (deals.length) {
+      const d = deals.reduce((a, b) => a.best.p <= b.best.p ? a : b).best;
+      return `<span class="price">${baseTxt ? "<s>" + baseTxt + "</s> " : ""}<span class="deal">${eur(d.p)}</span> con ${esc(d.name)}</span>`;
+    }
+    return baseTxt ? `<span class="price">desde ${baseTxt}</span>` : "";
+  }
+
+  // ---------- header ----------
+  const scraped = new Date(D.scraped);
+  const stampTxt = WDL[scraped.getDay()].toLowerCase() + " " + scraped.getDate() + "/" + (scraped.getMonth() + 1) + " a las " + pad(scraped.getHours()) + ":" + pad(scraped.getMinutes());
+  document.getElementById("stamp").textContent = "Actualizado el " + stampTxt + " · " + D.films.length + " películas en " + D.cinemas.length + " cines";
+  document.getElementById("stamp2").textContent = stampTxt;
+
+  function dayLabel(d) {
+    if (d === "all") return "Toda la semana";
+    const dt = parse(d), diff = Math.round((dt - parse(todayIso)) / 864e5);
+    return (diff === 0 ? "Hoy" : diff === 1 ? "Mañana" : WDL[dt.getDay()]) + " <small>" + dt.getDate() + "</small>";
+  }
+  const daysEl = document.getElementById("days");
+  daysEl.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; state.day = b.dataset.d; if (state.day !== todayIso) state.now = false; render(); refreshPanel(); });
+  const $ = id => document.getElementById(id);
+  $("now").addEventListener("click", () => { if (!dates.includes(todayIso)) return; state.now = !state.now; if (state.now) state.day = todayIso; render(); });
+  $("vose").addEventListener("click", () => { state.vose = !state.vose; save(); render(); refreshPanel(); });
+  $("few").addEventListener("click", () => { state.few = !state.few; save(); render(); });
+  $("favs").addEventListener("click", () => { if (!state.favs.size) { openDirectory(); return; } state.favOnly = !state.favOnly; save(); render(); });
+  $("src").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; state.src = b.dataset.s; save(); render(); refreshPanel(); });
+  $("q").addEventListener("input", e => { state.q = norm(e.target.value.trim()); render(); });
+  $("openDir").addEventListener("click", () => openDirectory());
+  $("openDisc").addEventListener("click", () => openDiscounts());
+  if (!dates.includes(todayIso)) { $("now").disabled = true; $("now").title = "Los datos no incluyen el día de hoy"; }
+
+  const toMin = t => { const m = +t.slice(0, 2) * 60 + +t.slice(3); return m < 300 ? m + 1440 : m; };  // after-midnight sessions count as late
+  const fillSelect = (el, items) => { el.insertAdjacentHTML("beforeend", items.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join("")); };
+  fillSelect($("fGenre"), Object.entries([...new Set(D.films.flatMap(f => f.g || []))].reduce((o, g) => (o[g] = GENRE_ES[g] || g, o), {})).sort((a, b) => a[1].localeCompare(b[1], "es")));
+  fillSelect($("fCountry"), [...new Set(D.films.map(f => f.c).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es")).map(c => [c, c]));
+  const hours = []; for (let h = 10; h <= 24; h++) hours.push([pad(h % 24) + ":00", pad(h % 24) + ":00"]);
+  fillSelect($("fFrom"), hours.slice(0, -1)); fillSelect($("fUntil"), hours.slice(2));
+  if (METRO.length) fillSelect($("fNear"), METRO.map(m => [m[0], m[0]])); else $("nearWrap").hidden = true;
+  const metroOf = name => { const m = METRO.find(x => x[0] === name); return m ? { lat: m[1], lon: m[2] } : null; };
+  const distTo = c => { const st = metroOf(state.near), C = D.cinemas[c]; return st && C.lat != null ? km(C, st) : null; };
+  [["fGenre", "genre"], ["fCountry", "country"], ["fFrom", "from"], ["fUntil", "until"], ["fNear", "near"]].forEach(([id, k]) => {
+    $(id).value = state[k]; $(id).addEventListener("change", e => { state[k] = e.target.value; save(); render(); });
+  });
+  $("fDur").addEventListener("change", e => { state.dur = +e.target.value; render(); });
+  $("fRadius").value = String(state.radius);
+  $("fRadius").addEventListener("change", e => { state.radius = +e.target.value; save(); render(); });
+  $("fClassic").addEventListener("click", () => { state.classic = !state.classic; render(); });
+  $("fWomen").addEventListener("click", () => { state.women = !state.women; render(); });
+  $("fQueer").addEventListener("click", () => { state.queer = !state.queer; render(); });
+  // queer festival / cycle sessions mark the film as LGTBIQ+ too
+  D.shows.forEach(s => { if (s[6] && /queer|lgtb|lgbt|orgullo|pride/i.test(s[6])) D.films[s[0]].qu = 1; });
+  $("filt").addEventListener("click", () => { state.filtOpen = !state.filtOpen; $("moreFilters").hidden = !state.filtOpen; $("filt").setAttribute("aria-expanded", state.filtOpen); });
+  $("fReset").addEventListener("click", () => {
+    Object.assign(state, { genre: "", dur: 0, country: "", from: "", until: "", near: "", classic: false, women: false, queer: false });
+    ["fGenre", "fCountry", "fFrom", "fUntil", "fNear"].forEach(id => $(id).value = ""); $("fDur").value = "0"; save(); render();
+  });
+  const activeFilters = () => [state.genre, state.dur, state.country, state.from, state.until, state.near, state.classic, state.women, state.queer].filter(Boolean).length;
+  const filmOk = f => (!state.genre || (f.g || []).includes(state.genre)) && (!state.dur || (f.rt && f.rt <= state.dur)) &&
+    (!state.country || f.c === state.country) && (!state.classic || (f.y && f.y < 2000)) &&
+    (!state.women || f.wo) && (!state.queer || f.qu);
+  const isPast = s => s[2] === todayIso && toMin(s[3]) < nowMin - 10;
+
+  function stubHtml(f, small) {
+    const R = SRC[state.src].get(f);
+    if (R.r == null) return small ? `<span class="sc" style="color:var(--muted)">–</span>` : `<div class="stub none" title="Sin nota en ${SRC[state.src].name}"><div class="n">–</div><div class="v">sin nota</div></div>`;
+    const val = R.max === 5 ? R.r.toFixed(2).replace(".", ",") : R.r.toFixed(1).replace(".", ",");
+    if (small) return `<span class="sc">${val}</span>`;
+    const tag = R.url ? "a" : "div";
+    return `<${tag} class="stub${R.v < MIN_VOTES ? " few" : ""}"${R.url ? ` href="${esc(R.url)}" target="_blank" rel="noopener"` : ""} title="Nota media en ${SRC[state.src].name}">
+      <div class="n">${val}${R.max === 5 ? "<small>/5</small>" : ""}</div><div class="v">${R.v.toLocaleString("es-ES")} votos</div></${tag}>`;
+  }
+  const sortFilms = (a, b) => { const A = SRC[state.src].get(a), B = SRC[state.src].get(b); return (B.r ?? -1) / B.max - (A.r ?? -1) / A.max || B.v - A.v; };
+  const chipsHtml = (list, multi) => list.map(s =>
+    `<span class="t${s[4] ? " vo" : ""}${isPast(s) ? " past" : ""}"${s[5] != null ? ` title="${eur(s[5])}"` : ""}>${multi ? `<span class="d">${WD[parse(s[2]).getDay()]}</span>` : ""}${s[3]}</span>`).join("");
+
+  function filteredShows(extra) {
+    const q = state.q;
+    return D.shows.filter(s => {
+      if (state.day !== "all" && s[2] !== state.day) return false;
+      if (state.vose && !s[4]) return false;
+      if (extra && !extra(s)) return false;
+      return true;
+    });
+  }
+
+  // ---------- main list ----------
+  function render() {
+    daysEl.innerHTML = dates.concat(["all"]).map(d => `<button type="button" class="pill" data-d="${d}" aria-pressed="${state.day === d}">${dayLabel(d)}</button>`).join("");
+    $("now").setAttribute("aria-pressed", state.now); $("vose").setAttribute("aria-pressed", state.vose); $("few").setAttribute("aria-pressed", state.few);
+    $("favs").setAttribute("aria-pressed", state.favOnly);
+    $("favs").textContent = "★ Mis cines" + (state.favs.size ? " (" + state.favs.size + ")" : "");
+    $("favs").title = state.favs.size ? "Solo sesiones en tus cines favoritos" : "Marca cines con ★ para filtrar por ellos";
+    const nf = activeFilters();
+    $("filt").textContent = "Filtros" + (nf ? " (" + nf + ")" : ""); $("filt").classList.toggle("on", nf > 0);
+    $("fClassic").setAttribute("aria-pressed", state.classic);
+    $("fWomen").setAttribute("aria-pressed", state.women); $("fQueer").setAttribute("aria-pressed", state.queer);
+    $("openDisc").textContent = "Mis descuentos" + (state.discounts.length ? " (" + state.discounts.length + ")" : "");
+    [...$("src").children].forEach(b => b.setAttribute("aria-pressed", b.dataset.s === state.src));
+    $("few").title = "Oculta películas con menos de 100 votos en " + SRC[state.src].name;
+    const q = state.q;
+    const byFilm = new Map();
+    for (const s of filteredShows(s => {
+      if (state.favOnly && !isFav(s[1])) return false;
+      if (state.from && toMin(s[3]) < toMin(state.from)) return false;
+      if (state.until && toMin(s[3]) + (D.films[s[0]].rt || 110) > toMin(state.until)) return false;   // runtime unknown: assume 110 min
+      if (state.near) { const d = distTo(s[1]); if (d == null || d > state.radius) return false; }
+      if (!filmOk(D.films[s[0]])) return false;
+      if (state.now) { const m = toMin(s[3]); if (s[2] !== todayIso || m < nowMin - 5 || m > nowMin + 180) return false; }
+      if (q) { const f = D.films[s[0]], c = D.cinemas[s[1]]; if (!(norm(f.t).includes(q) || norm(f.d).includes(q) || norm(c.n).includes(q))) return false; }
+      return true;
+    })) {
+      if (!byFilm.has(s[0])) byFilm.set(s[0], []);
+      byFilm.get(s[0]).push(s);
+    }
+    let films = [...byFilm.keys()].map(i => D.films[i]);
+    if (state.few) films = films.filter(f => SRC[state.src].get(f).v >= MIN_VOTES);
+    films.sort(sortFilms);
+    $("count").textContent = films.length + (films.length === 1 ? " película" : " películas");
+
+    const multi = state.day === "all";
+    $("list").innerHTML = !films.length
+      ? `<div class="empty">Ninguna sesión con estos filtros. Prueba otro día, quita «Solo VOSE» o desactiva «+100 votos».</div>`
+      : films.map((f, k) => {
+        const idx = D.films.indexOf(f), ss = byFilm.get(idx);
+        const byC = new Map();
+        ss.forEach(s => { if (!byC.has(s[1])) byC.set(s[1], []); byC.get(s[1]).push(s); });
+        let cines = [...byC.entries()].sort((a, b) => {
+          const live = x => x[1].some(s => !isPast(s));
+          if (state.near) return (distTo(a[0]) ?? 99) - (distTo(b[0]) ?? 99);
+          return (isFav(b[0]) - isFav(a[0])) || (live(b) - live(a)) || D.cinemas[a[0]].n.localeCompare(D.cinemas[b[0]].n, "es");
+        });
+        const open = state.open.has(idx), LIMIT = 5, hidden = cines.length - LIMIT;
+        if (!open && hidden > 0) cines = cines.slice(0, LIMIT);
+        const rows = cines.map(([cid, list]) => {
+          list.sort((a, b) => (a[2] + a[3]).localeCompare(b[2] + b[3]));
+          return `<div class="cine"><div><div class="cname"><button class="star" type="button" data-fav="${cid}" aria-pressed="${isFav(cid)}" aria-label="Favorito">★</button><button class="clink" type="button" data-cine="${cid}">${esc(D.cinemas[cid].n)}</button>${state.near && distTo(cid) != null ? `<span class="dist">${distTo(cid).toFixed(1).replace(".", ",")} km</span>` : ""}</div>${priceHtml(cid, list)}</div><div class="times">${chipsHtml(list, multi)}</div></div>`;
+        }).join("");
+        const more = !open && hidden > 0 ? `<button class="more" type="button" data-open="${idx}">Ver ${hidden} cine${hidden > 1 ? "s" : ""} más</button>` : "";
+        const meta = [f.c, f.rt ? f.rt + " min" : "", f.age].filter(Boolean).map(esc).join(" · ");
+        const people = (f.d ? `De <b>${esc(f.d)}</b>` : "") + (f.cast && f.cast.length ? (f.d ? ", con " : "Con ") + esc(f.cast.join(", ")) : "");
+        const others = Object.entries(SRC).filter(([k]) => k !== state.src).map(([k, S]) => {
+          const R = S.get(f); if (R.r == null) return "";
+          const v = R.max === 5 ? R.r.toFixed(2).replace(".", ",") + "/5" : R.r.toFixed(1).replace(".", ",");
+          return R.url ? `<a href="${esc(R.url)}" target="_blank" rel="noopener">${S.name} ${v}</a>` : `${S.name} ${v}`;
+        }).filter(Boolean).join(" · ");
+        const img = f.img ? `<img class="poster" src="${f.img}" alt="" loading="lazy">` : `<div class="poster"></div>`;
+        return `<article class="film">
+          <div class="rank">${k + 1}</div>${img}
+          <div class="info"><h2><a href="${esc(f.u)}" target="_blank" rel="noopener">${esc(f.t)}</a>${f.y ? `<span class="yr">${f.y}</span>` : ""}${f.y && f.y < 2000 ? `<span class="badge classic">Clásico</span>` : ""}${f.wo ? `<span class="badge women" title="Según Wikidata">Directora</span>` : ""}${f.qu ? `<span class="badge queer">LGTBIQ+</span>` : ""}${spread(f) >= 1.5 ? `<span class="badge split" title="Las notas de Filmaffinity, IMDb y Letterboxd difieren en ${spread(f).toFixed(1).replace(".", ",")} puntos sobre 10">Divide</span>` : ""}</h2>
+            <div class="meta">${meta}</div><div class="meta">${people}</div>${others ? `<div class="others">${others}</div>` : ""}</div>
+          ${stubHtml(f)}
+          <div class="sessions">${rows}${more}</div>
+        </article>`;
+      }).join("");
+
+    const ev = D.events.filter(e => (state.day === "all" || e.date === state.day) && (!q || norm(e.t + " " + e.cyc + " " + e.sec + " " + e.w).includes(q)));
+    const cycles = [...new Set(D.events.map(e => e.cyc).filter(Boolean).map(c => c.replace(/\b\w/g, m => m.toUpperCase())))];
+    $("fest").innerHTML = `<h3>Festivales y ciclos</h3>
+      <p>Sesiones de festival en Cineteca Madrid (Matadero) y el Cine Doré${cycles.length ? ": " + cycles.map(esc).join(", ") : ""}.</p>` +
+      (ev.length ? ev.map(e => {
+        const dt = parse(e.date);
+        return `<div class="ev"><div class="when">${e.times.join(" · ")}<small>${WDL[dt.getDay()]} ${dt.getDate()}</small></div>
+          <div><span class="tag">${esc(e.cyc || e.sec)}</span> <span class="meta">· ${esc(e.w)}</span><br><a href="${esc(e.u)}" target="_blank" rel="noopener">${esc(e.t)}</a>${e.rt ? ` <span class="meta">· ${e.rt} min</span>` : ""}
+          <div class="desc">${esc(e.desc)}</div></div></div>`;
+      }).join("") : `<div class="ev"><div></div><div class="desc">No hay sesiones de festival este día.</div></div>`);
+  }
+
+  document.addEventListener("click", e => {
+    const o = e.target.closest("[data-open]"); if (o) { state.open.add(+o.dataset.open); render(); return; }
+    const f = e.target.closest("[data-fav]"); if (f) { toggleFav(+f.dataset.fav); return; }
+    const c = e.target.closest("[data-cine]"); if (c) { openCinema(+c.dataset.cine); return; }
+  });
+
+  // ---------- panel ----------
+  let panelView = null, lastFocus = null;
+  function showPanel(title, html, view) {
+    panelView = view;
+    if ($("panel").hidden) lastFocus = document.activeElement;
+    $("panelTitle").innerHTML = title; $("panelBody").innerHTML = html;
+    $("panel").hidden = false; $("scrim").hidden = false; document.body.classList.add("locked");
+    $("close").focus({ preventScroll: true });
+  }
+  function closePanel() {
+    $("panel").hidden = true; $("scrim").hidden = true; document.body.classList.remove("locked"); panelView = null;
+    if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
+  }
+  $("close").addEventListener("click", closePanel);
+  $("scrim").addEventListener("click", closePanel);
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("panel").hidden) closePanel(); });
+  function refreshPanel() { if (!panelView) return; const st = $("panelBody").scrollTop; panelView.redraw(); $("panelBody").scrollTop = st; }
+
+  // map
+  const mapBase = (() => {
+    const munis = M.munis.map(m => `<path d="${m.d}" />`).join("");
+    const dist = M.districts.map(m => `<path d="${m.d}" />`).join("");
+    return { munis, dist };
+  })();
+  function mapSvg(c, span) {
+    const C = D.cinemas[c];
+    const [cx, cy] = proj(C.lat, C.lon), w = span, h = span * 3 / 4;
+    const k = span / 12;
+    const labels = [...M.districts.map(m => [m, 1]), ...M.munis.map(m => [m, 0])]
+      .filter(([m]) => Math.abs(m.x - cx) < w / 2 && Math.abs(m.y - cy) < h / 2)
+      .map(([m, isD]) => `<text x="${m.x}" y="${m.y}" font-size="${(isD ? .34 : .4) * k}" text-anchor="middle" fill="var(--muted)" opacity="${isD ? .9 : .7}">${esc(m.n)}</text>`).join("");
+    const dots = D.cinemas.map((o, i) => {
+      if (i === c || o.lat == null) return "";
+      const [x, y] = proj(o.lat, o.lon);
+      if (Math.abs(x - cx) > w / 2 || Math.abs(y - cy) > h / 2) return "";
+      return `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${.11 * k}" fill="${isFav(i) ? "var(--fav)" : "var(--muted)"}" opacity=".8"><title>${esc(o.n)}</title></circle>`;
+    }).join("");
+    return `<svg viewBox="${cx - w / 2} ${cy - h / 2} ${w} ${h}" role="img" aria-label="Mapa: ${esc(C.n)}">
+      <rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" fill="var(--map-land)" />
+      <g fill="none" stroke="var(--map-line)" stroke-width="${.03 * k}" stroke-linejoin="round">${mapBase.munis}</g>
+      <g fill="none" stroke="var(--map-line)" stroke-width="${.02 * k}" stroke-dasharray="${.08 * k} ${.06 * k}">${mapBase.dist}</g>
+      <path d="${M.river}" fill="none" stroke="var(--map-water)" stroke-width="${.07 * k}" stroke-linecap="round" />
+      <path d="${M.m30}" fill="none" stroke="var(--map-road)" stroke-width="${.09 * k}" stroke-linecap="round" opacity=".85" />
+      ${labels}${dots}
+      <circle cx="${cx}" cy="${cy}" r="${.5 * k}" fill="var(--accent)" opacity=".18" />
+      <circle cx="${cx}" cy="${cy}" r="${.2 * k}" fill="var(--accent)" stroke="var(--bg)" stroke-width="${.06 * k}" />
+    </svg>`;
+  }
+
+  let mapSpan = 8;
+  function openCinema(c) {
+    const C = D.cinemas[c];
+    const draw = () => {
+      const all = filteredShows(s => s[1] === c);
+      const byF = new Map();
+      all.forEach(s => { if (!byF.has(s[0])) byF.set(s[0], []); byF.get(s[0]).push(s); });
+      const films = [...byF.keys()].map(i => D.films[i]).sort(sortFilms);
+      const multi = state.day === "all";
+      const dayTxt = state.day === "all" ? "esta semana" : dayLabel(state.day).replace(/<[^>]+>/g, "").toLowerCase().replace(/^(\D+)(\d+)$/, "$1 $2").trim();
+      const pr = priceFor(c, state.day === "all" ? todayIso : state.day, null);
+      const sessionPrices = [...new Set(D.shows.filter(s => s[1] === c && s[5] != null).map(s => s[5]))].sort((a, b) => a - b);
+      const gmaps = C.lat != null ? `https://www.google.com/maps/search/?api=1&query=${C.lat},${C.lon}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(C.n + " " + (C.a || "") + " Madrid")}`;
+      const priceRows = [];
+      if (sessionPrices.length) priceRows.push(`<dt>Entrada</dt><dd>${sessionPrices.map(eur).join(" · ")} según sesión</dd>`);
+      else if (C.p != null) priceRows.push(`<dt>Entrada</dt><dd>desde ${eur(C.p)}</dd>`);
+      else priceRows.push(`<dt>Entrada</dt><dd>Sin precio publicado</dd>`);
+      if (C.pt && !sessionPrices.length) priceRows.push(`<dt>Detalle</dt><dd>${esc(C.pt)}</dd>`);
+      if (pr.best) priceRows.push(`<dt>Tu precio</dt><dd class="deal">${eur(pr.best.p)} con ${esc(pr.best.name)}</dd>`);
+      const applicable = state.discounts.filter(d => scopeMatches(d, c));
+      $("panelTitle").innerHTML = `${esc(C.n)}<div class="sub">${esc([C.a, C.town].filter(Boolean).join(" · "))}${C.ch ? " · " + esc(C.ch) : ""}</div>`;
+      $("panelBody").innerHTML = `
+        <div><button class="pill favs" type="button" data-fav="${c}" aria-pressed="${isFav(c)}">${isFav(c) ? "★ En tus cines" : "☆ Añadir a mis cines"}</button></div>
+        <div>
+          ${C.lat != null ? `<div class="mapbox">${mapSvg(c, mapSpan)}<div class="zoom"><button type="button" data-z="-1" aria-label="Acercar">+</button><button type="button" data-z="1" aria-label="Alejar">−</button></div></div>` : `<p class="note">No tenemos la ubicación exacta de este cine.</p>`}
+          <div class="maplinks"><a href="${gmaps}" target="_blank" rel="noopener">Abrir en Google Maps</a><a href="${esc(C.u)}" target="_blank" rel="noopener">Cartelera en ${esc(C.src === "web del cine" ? "la web del cine" : C.src)}</a></div>
+        </div>
+        <div><h4>Precio</h4><dl class="kv">${priceRows.join("")}</dl>
+          ${!applicable.length ? `<p class="note">¿Tienes carnet joven, de estudiante o una tarjeta de cine? <button class="more" type="button" id="toDisc">Añade tus descuentos</button></p>` : ""}</div>
+        <div><h4>En cartel ${esc(dayTxt)}${state.vose ? " · solo VOSE" : ""}</h4>
+          <div class="plist">${films.length ? films.map(f => {
+            const ss = byF.get(D.films.indexOf(f)).sort((a, b) => (a[2] + a[3]).localeCompare(b[2] + b[3]));
+            return `<div class="pfilm">${f.img ? `<img src="${f.img}" alt="">` : `<div class="ph"></div>`}
+              <div><b>${esc(f.t)}</b> <span class="meta">${esc([f.y, f.rt ? f.rt + " min" : ""].filter(Boolean).join(" · "))}</span><div class="times">${chipsHtml(ss, multi)}</div></div>
+              ${stubHtml(f, true)}</div>`;
+          }).join("") : `<p class="note">No hay sesiones ${esc(dayTxt)} con estos filtros.</p>`}</div></div>`;
+      $("panelBody").querySelectorAll("[data-z]").forEach(b => b.addEventListener("click", () => { mapSpan = Math.min(48, Math.max(2, mapSpan * (b.dataset.z === "1" ? 2 : .5))); refreshPanel(); }));
+      const td = $("toDisc"); if (td) td.addEventListener("click", () => openDiscounts(c));
+    };
+    showPanel("", "", { redraw: draw }); draw();
+  }
+
+  function openDirectory() {
+    const draw = () => {
+      const counts = {};
+      filteredShows().forEach(s => { counts[s[1]] = (counts[s[1]] || 0) + 1; });
+      const idx = D.cinemas.map((_, i) => i);
+      const groups = [["Tus cines", idx.filter(isFav)], ["Madrid capital", idx.filter(i => !isFav(i) && /^madrid$/i.test(D.cinemas[i].town || "Madrid"))], ["Resto de la Comunidad", idx.filter(i => !isFav(i) && !/^madrid$/i.test(D.cinemas[i].town || "Madrid"))]];
+      $("panelTitle").innerHTML = `Cines<div class="sub">Marca con ★ los tuyos para filtrar por ellos. Toca un nombre para ver dónde está y qué ponen.</div>`;
+      $("panelBody").innerHTML = groups.filter(g => g[1].length).map(([name, list]) => `<div><h4>${name}</h4><div class="dir">${list.sort((a, b) => D.cinemas[a].n.localeCompare(D.cinemas[b].n, "es")).map(i => {
+        const C = D.cinemas[i];
+        return `<div class="row"><button class="star" type="button" data-fav="${i}" aria-pressed="${isFav(i)}" aria-label="Favorito">★</button><button class="clink" type="button" data-cine="${i}">${esc(C.n)}</button><small>${C.town && !/^madrid$/i.test(C.town) ? esc(C.town) + " · " : ""}${counts[i] || 0} sesiones</small></div>`;
+      }).join("")}</div></div>`).join("");
+    };
+    showPanel("", "", { redraw: draw }); draw();
+  }
+
+  // ---------- discounts ----------
+  const KIND = { price: "Precio fijo (€)", pct: "Descuento (%)", off: "Euros menos (€)" };
+  const DAYS_ORDER = [1, 2, 3, 4, 5, 6, 0];
+  function discDesc(d) {
+    const scope = d.scope === "all" ? "Todos los cines" : d.scope.startsWith("chain:") ? "Cines " + d.scope.slice(6) : d.scope.slice(7);
+    const val = d.kind === "price" ? eur(d.value) : d.kind === "pct" ? "−" + d.value + " %" : "−" + eur(d.value);
+    const days = d.days && d.days.length && d.days.length < 7 ? " · " + DAYS_ORDER.filter(x => d.days.includes(x)).map(x => WD[x]).join(", ") : "";
+    return `${val} · ${esc(scope)}${days}`;
+  }
+  function openDiscounts(preCinema) {
+    const chains = [...new Set(D.cinemas.map(c => c.ch).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+    const draw = () => {
+      $("panelTitle").innerHTML = `Mis descuentos<div class="sub">Añade el precio que pagas tú con carnet joven, de estudiante, tarjetas de cine o días del espectador. Se guarda solo en este navegador.</div>`;
+      $("panelBody").innerHTML = `
+        <div>${state.discounts.length ? state.discounts.map((d, i) => `<div class="disc"><div><b>${esc(d.name)}</b><small>${discDesc(d)}</small></div><button type="button" data-del="${i}">Quitar</button></div>`).join("") : `<p class="note">Aún no tienes descuentos. Cuando añadas uno, verás tu precio junto a cada cine.</p>`}</div>
+        <form class="form" id="discForm" novalidate>
+          <h4>Nuevo descuento</h4>
+          <div class="quick">${["Carnet Joven", "Estudiante", "Menores de 25", "Tarjeta de cine", "Día del espectador"].map(n => `<button type="button" data-q="${n}">${n}</button>`).join("")}</div>
+          <label>Nombre<input id="dName" required placeholder="Por ejemplo: Carnet Joven"></label>
+          <label>Dónde se aplica<select id="dScope">
+            <option value="all">Todos los cines</option>
+            <optgroup label="Cadenas">${chains.map(c => `<option value="chain:${esc(c)}">${esc(c)}</option>`).join("")}</optgroup>
+            <optgroup label="Un cine">${D.cinemas.map(c => c.n).sort((a, b) => a.localeCompare(b, "es")).map(n => `<option value="cinema:${esc(n)}">${esc(n)}</option>`).join("")}</optgroup>
+          </select></label>
+          <div class="two">
+            <label>Tipo<select id="dKind">${Object.entries(KIND).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select></label>
+            <label>Valor<input id="dValue" type="number" min="0" step="0.05" inputmode="decimal" placeholder="6,00"></label>
+          </div>
+          <div><span class="note">Días</span><div class="wd">${DAYS_ORDER.map(x => `<label><input type="checkbox" value="${x}" checked>${WD[x]}</label>`).join("")}</div></div>
+          <p class="err" id="dErr" hidden></p>
+          <div><button class="btn" type="submit">Añadir descuento</button></div>
+          <p class="note">El precio fijo funciona aunque no sepamos el precio normal del cine. El porcentaje y los euros menos se calculan sobre el precio publicado.</p>
+        </form>`;
+      if (preCinema != null) $("dScope").value = "cinema:" + D.cinemas[preCinema].n;
+      $("panelBody").querySelectorAll("[data-q]").forEach(b => b.addEventListener("click", () => { $("dName").value = b.dataset.q; $("dValue").focus(); }));
+      $("panelBody").querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", () => { state.discounts.splice(+b.dataset.del, 1); save(); render(); draw(); }));
+      $("discForm").addEventListener("submit", e => {
+        e.preventDefault();
+        const name = $("dName").value.trim(), value = parseFloat(String($("dValue").value).replace(",", "."));
+        const kind = $("dKind").value, days = [...$("discForm").querySelectorAll(".wd input:checked")].map(x => +x.value);
+        const err = !name ? "Ponle un nombre al descuento." : !(value >= 0) ? "Escribe el valor: un precio en euros o un porcentaje." : kind === "pct" && value > 100 ? "El porcentaje no puede pasar de 100." : !days.length ? "Elige al menos un día." : "";
+        if (err) { $("dErr").textContent = err; $("dErr").hidden = false; return; }
+        state.discounts.push({ name, scope: $("dScope").value, kind, value, days: days.length === 7 ? [] : days });
+        save(); render(); preCinema = null; draw();
+      });
+    };
+    showPanel("", "", { redraw: draw }); draw();
+  }
+
+  render();
+})();
+</script>
