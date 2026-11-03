@@ -70,11 +70,24 @@ def imdb_match(films, imdbdir):
             if fid not in best or v > best[fid][1]:
                 best[fid] = (tconst, v)
     matched = {fid: b[0] for fid, b in best.items()}
+    wanted = {f.get("imdb") or matched.get(f["id"]) for f in films} - {None, ""}
+    titles = {}
+    with gzip.open(f"{imdbdir}/title.basics.tsv.gz", "rt", encoding="utf-8") as fh:   # second pass: titles of matched ids only
+        next(fh)
+        for line in fh:
+            t = line[:line.find("\t")]
+            if t in wanted:
+                p = line.split("\t")
+                titles[t] = (p[2], p[3])
     for f in films:                                 # genres also for ids given by the cinema (Verdi)
         tc = f.get("imdb") or matched.get(f["id"])
         f["g"] = genres.get(tc, []) if tc else []
         if tc and not f.get("y") and info.get(tc):    # year from IMDb when the cinema listing has none
             f["y"] = info[tc]
+        if tc in titles:                              # English/primary and original titles (Letterboxd watchlist matching)
+            f["en"], o = titles[tc]
+            if not f.get("orig") and o != f["en"]:
+                f["orig"] = o
     return matched, votes
 
 

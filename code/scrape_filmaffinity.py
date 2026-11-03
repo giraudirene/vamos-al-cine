@@ -3,12 +3,15 @@
 Usage: python3 -I scrape_filmaffinity.py DATADIR   -> DATADIR/fa_showtimes.json
 One page per cinema holds all upcoming days, the Filmaffinity rating and a (VOSE) tag in the session title.
 """
-import datetime, html, json, re, sys, time, urllib.request
+import datetime, html, json, re, sys, time, urllib.parse, urllib.request
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
 LIST = "https://www.filmaffinity.com/es/theaters.php?state=ES-M"
 THEATER = "https://www.filmaffinity.com/es/theater-showtimes.php?id={}"
 DELAY = 3.0
+AJAX = "https://www.filmaffinity.com/es/theaters.ajax.php"
+MORE_MAX = 150          # extra requests per day for days beyond the first ~3
+MORE_MIN_RATING = 7.0
 MONTHS = {m: i + 1 for i, m in enumerate("enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre".split())}
 TODAY = datetime.date.today()
 
@@ -39,6 +42,48 @@ def to_date(mday):
     return datetime.date(y, mo, int(d)).isoformat()
 
 
+def parse_rows(block, vose, label):
+    """Sessions in one showtimes block: one row per day, times as links titled with the room."""
+    shows = []
+    for row in re.split(r'<div class="row g-0 mb-2', block)[1:]:
+        sd = re.search(r'data-sess-date="(\d{4}-\d\d-\d\d)"', row)
+        md = re.search(r'<span class="mday">(.*?)</span>', row)
+        date = sd.group(1) if sd else (to_date(txt(md.group(1))) if md and txt(md.group(1)) else None)
+        for room, t in re.findall(r'title="([^"]*)"[^>]*>\s*(\d\d:\d\d)\s*</a>', row):
+            if date:
+                shows.append({"date": date, "time": t, "vose": vose, "label": label, "room": room})
+    return shows
+
+
+def more_days(out):
+    """The theatre page shows ~3 days; 'ver más días' is one request per film and cinema.
+    Fetch it only for well-rated films (VOSE first), capped, and stop at the first refusal."""
+    todo = []
+    for c in out:
+        for f in c["films"]:
+            for m in f.pop("more", []):
+                if (f.get("rating") or 0) >= MORE_MIN_RATING:
+                    todo.append((-int(m["vose"]), -(f["rating"] or 0), m, f))
+    todo.sort(key=lambda x: (x[0], x[1]))
+    done = 0
+    for _, _, m, f in todo[:MORE_MAX]:
+        time.sleep(DELAY)
+        try:
+            data = urllib.parse.urlencode({"action": "getMovieTheaterShowtimesBs", "theaterId": m["t"],
+                                           "movieId": m["m"], "stId": m["st"]}).encode()
+            req = urllib.request.Request(AJAX, data=data, headers={"User-Agent": UA, "X-Requested-With": "XMLHttpRequest",
+                                         "Referer": THEATER.format(m["t"]), "Accept-Language": "es-ES,es;q=0.9"})
+            with urllib.request.urlopen(req, timeout=30) as r:
+                block = json.loads(r.read().decode("utf-8", "ignore")).get("showtimes", "")
+        except Exception as e:
+            print("  more days stopped:", e, file=sys.stderr)
+            break
+        have = {(s["date"], s["time"], s["room"]) for s in f["shows"]}
+        f["shows"] += [s for s in parse_rows(block, m["vose"], m["label"]) if (s["date"], s["time"], s["room"]) not in have]
+        done += 1
+    print(f"more days: {done} of {len(todo)} candidate blocks fetched", file=sys.stderr)
+
+
 def parse_theater(page):
     info = {}
     m = re.search(r"cp=([-\d.]+)~([-\d.]+)", page)
@@ -64,21 +109,18 @@ def parse_theater(page):
         f["cast"] = [txt(a) for a in re.findall(r"<a [^>]*>(.*?)</a>", m.group(1))][:3] if m else []
         m = re.search(r'<div class="avg">\s*([\d,]+)\s*</div>', c); f["rating"] = float(m.group(1).replace(",", ".")) if m else None
         m = re.search(r'<div class="count">.*?([\d.]+)\s*</div>', c, re.S); f["votes"] = int(m.group(1).replace(".", "")) if m else 0
-        shows = []
+        shows, more = [], []
         for block in c.split('class="movie-showtimes-n')[1:]:
             label = re.search(r'<span class="fs-5">(.*?)</span>', block, re.S)
             label = txt(label.group(1)) if label else ""
             vose = bool(re.search(r"\bV\.?O\.?S?\.?E?\.?\b|\bVOS\b|versi.n original", label, re.I))
             m = re.search(r'class="badge[^"]*runtime">\s*(\d+)', block); f.setdefault("runtime", int(m.group(1)) if m else None)
             m = re.search(r'class="badge[^"]*age-rat"[^>]*>(.*?)<', block); f.setdefault("age", txt(m.group(1)) if m else "")
-            for row in re.split(r'<div class="row g-0 mb-2', block)[1:]:
-                sd = re.search(r'data-sess-date="(\d{4}-\d\d-\d\d)"', row)
-                md = re.search(r'<span class="mday">(.*?)</span>', row)
-                date = sd.group(1) if sd else (to_date(txt(md.group(1))) if md and txt(md.group(1)) else None)
-                for room, t in re.findall(r'title="([^"]*)"[^>]*>\s*(\d\d:\d\d)\s*</a>', row):
-                    if date:
-                        shows.append({"date": date, "time": t, "vose": vose, "label": label, "room": room})
-        f["shows"] = shows
+            shows += parse_rows(block, vose, label)
+            ids = re.search(r'data-m-id="(\d+)" data-t-id="(\d+)"', block)
+            for st in re.findall(r'data-st-id="(\d+)"', block) if ids and "see-more" in block else []:
+                more.append({"m": ids.group(1), "t": ids.group(2), "st": st, "vose": vose, "label": label})
+        f["shows"], f["more"] = shows, more
         if shows:
             cards.append(f)
     info["films"] = cards
@@ -97,6 +139,11 @@ def main(datadir):
         n = sum(len(f["shows"]) for f in info["films"])
         out.append({"fa_tid": tid, "name": html.unescape(name), "url": THEATER.format(tid), **info})
         print(f"[{i+1}/{len(theaters)}] {html.unescape(name)}: {len(info['films'])} films, {n} shows", file=sys.stderr)
+    if sum(1 for c in out if c["films"]) >= 10:
+        more_days(out)
+    for c in out:
+        for f in c["films"]:
+            f.pop("more", None)
     if sum(1 for c in out if c["films"]) < 10:
         sys.exit("too few cinemas with sessions; keeping the previous file")
     json.dump({"scraped": datetime.datetime.now().isoformat(timespec="minutes"), "cinemas": out},

@@ -16,6 +16,8 @@ from ratings_filmaffinity import get as fa_get, norm, parse_film_page, parse_sea
 
 TODAY = datetime.date.today().isoformat()
 LAST = (datetime.date.today() + datetime.timedelta(days=6)).isoformat()
+FEST_LAST = (datetime.date.today() + datetime.timedelta(days=60)).isoformat()
+FEST_RE = re.compile(r"festival|queercinemad|muestra|semana de|m.rgenes|documenta|animadrid|cine por mujeres", re.I)
 CHAINS = ["Cinesa", "Yelmo", "Renoir", "Ocine", "Kinépolis", "mk2", "Verdi", "Conde Duque", "Golem",
           "Embajadores", "Artistic", "Odeon", "Zoco", "Cine Doré", "Cineteca"]
 STOP = {"cine", "cines", "de", "del", "la", "el", "3d", "madrid", "sala", "multicines", "cinemes", "filmoteca", "espanola"}
@@ -64,6 +66,7 @@ def main(d):
     search_cache = json.load(open(search_cache_path)) if os.path.exists(search_cache_path) else {}
 
     films, cinemas, shows = {}, [], {}
+    fest = []                                    # festival sessions up to 60 days ahead (calendar)
     title_index = {}
 
     def best(pool, key, name):
@@ -176,6 +179,9 @@ def main(d):
             elif s.get("imdb") and not films[fid]["imdb"]:
                 films[fid]["imdb"] = re.sub(r".*/(tt\d+).*", r"\1", s["imdb"])
             add_show(fid, cid, s["date"], s["time"], s["vose"], s.get("price"), s.get("cycle", ""))
+            if s.get("cycle") and FEST_RE.search(s["cycle"]) and TODAY <= s["date"] <= FEST_LAST:
+                fest.append({"date": s["date"], "time": s["time"], "t": s["title"], "u": s.get("url", ""),
+                             "cyc": s["cycle"], "w": x["name"]})
         sp = sorted({s["price"] for s in x["shows"] if s.get("price")})
         if sp:
             cinemas[cid]["p"] = sp[0]
@@ -212,6 +218,18 @@ def main(d):
                "sec": e["section"], "cyc": e.get("cycle", ""), "desc": e["desc"], "w": "Cineteca"}
               for e in ct if TODAY <= e["date"] <= LAST]
 
+    for e in ct:
+        if (e.get("cycle") or FEST_RE.search(e.get("section", ""))) and TODAY <= e["date"] <= FEST_LAST:
+            for t in e["times"]:
+                fest.append({"date": e["date"], "time": t, "t": e["title"], "u": e["url"],
+                             "cyc": e.get("cycle") or e["section"], "w": "Cineteca Madrid"})
+
+    # first time each film was seen (for "new this week"); the first run seeds everything as old
+    fs_path = f"{d}/first_seen.json"
+    first_seen = load("first_seen.json", None)
+    seeding = first_seen is None
+    first_seen = first_seen or {}
+
     used = {s[0] for s in shows.values()}
     films = {k: v for k, v in films.items() if k in used}
     for f in films.values():
@@ -223,11 +241,25 @@ def main(d):
                 f["img"] = ""
             time.sleep(0.3)
 
+    for fid, f in films.items():
+        key = f"{norm(f['t'])}|{f['y'] or ''}"
+        if key not in first_seen:
+            first_seen[key] = "seed" if seeding else TODAY
+        f["fs"] = "" if first_seen[key] == "seed" else first_seen[key]
+    json.dump(first_seen, open(fs_path, "w"), ensure_ascii=False)
+
+    # complete week? (Filmaffinity only lists ~3 days unless the extra-days fetch worked)
+    later = (datetime.date.today() + datetime.timedelta(days=5)).isoformat()
+    fa_cids = {i for i, c in enumerate(cinemas) if c["src"] == "Filmaffinity"}
+    with_later = {s[1] for s in shows.values() if s[1] in fa_cids and s[2] >= later}
+    full_week = bool(fa_cids) and len(with_later) >= 0.6 * len(fa_cids)
+
     fid_list = list(films)
     pos = {k: i for i, k in enumerate(fid_list)}
     out = {"scraped": fa["scraped"], "today": TODAY, "films": [films[k] for k in fid_list], "cinemas": cinemas,
            "shows": sorted([[pos[s[0]]] + s[1:] for s in shows.values()], key=lambda x: (x[2], x[3])),
-           "events": events, "cineteca": cineteca}
+           "events": events, "cineteca": cineteca, "full_week": full_week,
+           "fest": sorted(fest, key=lambda e: (e["date"], e["time"]))}
     if len(out["shows"]) < 300:
         sys.exit(f"only {len(out['shows'])} sessions; keeping the previous site_data.json")
     json.dump(out, open(f"{d}/site_data.json", "w"), ensure_ascii=False, separators=(",", ":"))

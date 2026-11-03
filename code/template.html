@@ -93,7 +93,7 @@ header.top { padding-block: 28px 8px; }
 .badge.classic { color: var(--muted); }
 .badge.women { color: var(--deal); }
 .badge.queer { color: var(--accent); }
-#fWomen[aria-pressed="true"], #fQueer[aria-pressed="true"], #fClassic[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
 .dist { font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 4px; white-space: nowrap; }
 
 main { padding-block: 8px 40px; }
@@ -214,142 +214,376 @@ footer a { color: inherit; }
   @keyframes rise { from { transform: translateY(4px); } to { transform: none; } }
   @keyframes slide { from { transform: translateX(16px); } to { transform: none; } }
 }
+
+.lang { display: inline-flex; gap: 2px; margin-left: auto; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--surface); }
+.lang button { border: 0; background: none; padding: 4px 10px; font-size: 12px; letter-spacing: .06em; cursor: pointer; }
+.lang button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.pill.tog[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.tracked { margin-top: 14px; padding: 10px 14px; border: 1px solid var(--fav); border-radius: 8px; font-size: 14px; background: var(--surface); }
+.tlink { border: 0; background: none; padding: 0; color: var(--accent); cursor: pointer; font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.follow { margin-top: 6px; font-size: 12.5px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 2px 10px; cursor: pointer; }
+.follow[aria-pressed="true"] { border-color: var(--fav); color: var(--fav); font-weight: 600; }
+.film.is-tracked .poster { outline: 2px solid var(--fav); outline-offset: 2px; }
+.badge.new { color: var(--deal); }
+.badge.last { color: var(--accent); }
+.badge.wl { color: var(--fav); }
+.muted { color: var(--muted); }
+.calrow { border-top: 1px solid var(--line); padding-block: 10px; }
+.calrow summary { cursor: pointer; display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 2px 14px; list-style: none; }
+.calrow summary::-webkit-details-marker { display: none; }
+.calrow .cdates { font-weight: 600; font-variant-numeric: tabular-nums; }
+.calrow .cname2 { font-weight: 600; }
+.calrow .meta { grid-column: 2; }
+.calrow ul { margin: 8px 0 0 154px; padding: 0; list-style: none; font-size: 14px; display: grid; gap: 4px; }
+.calrow .when2 { font-variant-numeric: tabular-nums; color: var(--muted); }
+.calrow a { color: var(--ink); }
+.addt { grid-template-columns: minmax(0, 1fr) auto; align-items: end; margin-top: 10px; }
+.filebtn { display: inline-block; cursor: pointer; }
+@media (max-width: 640px) {
+  .calrow summary { grid-template-columns: minmax(0, 1fr); }
+  .calrow .meta { grid-column: 1; }
+  .calrow ul { margin-left: 0; }
+  .lang { margin-left: 0; }
+}
 </style>
 
 <header class="top wrap">
   <div class="brand">
     <h1>Vamos al cine<span>.</span></h1>
-    <p>Las películas mejor valoradas en los cines de Madrid, con sus horarios.</p>
+    <p data-i18n="tagline"></p>
+    <div class="lang" role="group" aria-label="Idioma / Language"><button type="button" data-lang="es">ES</button><button type="button" data-lang="en">EN</button><button type="button" data-lang="fr">FR</button></div>
   </div>
   <div class="stamp" id="stamp"></div>
 </header>
 
 <div class="bar">
   <div class="wrap">
-    <div class="days" id="days" role="group" aria-label="Día"></div>
+    <div class="days" id="days" role="group"></div>
     <div class="row2">
-      <span class="seg-label">Nota</span>
-      <div class="seg" id="src" role="group" aria-label="Nota de">
-        <button type="button" data-s="fa">Filmaffinity</button><button type="button" data-s="im">IMDb</button><button type="button" data-s="lb">Letterboxd</button><button type="button" data-s="av" title="Media de las tres notas (sobre 10)">Media</button>
+      <span class="seg-label" data-i18n="score"></span>
+      <div class="seg" id="src" role="group">
+        <button type="button" data-s="fa">Filmaffinity</button><button type="button" data-s="im">IMDb</button><button type="button" data-s="lb">Letterboxd</button><button type="button" data-s="av" data-i18n="avg"></button>
       </div>
       <div class="tools">
-        <button class="pill" id="openDir" type="button">Cines</button>
-        <button class="pill" id="openDisc" type="button">Mis descuentos</button>
+        <button class="pill" id="openDir" type="button" data-i18n="cinemas"></button>
+        <button class="pill" id="openTrack" type="button"></button>
+        <button class="pill" id="openDisc" type="button"></button>
       </div>
     </div>
     <div class="row2">
-      <button class="pill now" id="now" type="button" aria-pressed="false" title="Sesiones que empiezan en las próximas 3 horas">Empieza pronto</button>
-      <button class="pill vose" id="vose" type="button" aria-pressed="false">Solo VOSE</button>
-      <button class="pill favs" id="favs" type="button" aria-pressed="false">★ Mis cines</button>
-      <button class="pill few" id="few" type="button" aria-pressed="true" title="Oculta películas con menos de 100 votos en la nota elegida">+100 votos</button>
-      <button class="pill filt" id="filt" type="button" aria-expanded="false" aria-controls="moreFilters">Filtros</button>
-      <input class="search" id="q" type="search" placeholder="Película, director o cine" aria-label="Buscar película, director o cine">
+      <button class="pill now" id="now" type="button" aria-pressed="false" data-i18n="soon"></button>
+      <button class="pill vose" id="vose" type="button" aria-pressed="false" data-i18n="voseOnly"></button>
+      <button class="pill favs" id="favs" type="button" aria-pressed="false"></button>
+      <button class="pill few" id="few" type="button" aria-pressed="true" data-i18n="votes100"></button>
+      <button class="pill filt" id="filt" type="button" aria-expanded="false" aria-controls="moreFilters"></button>
+      <input class="search" id="q" type="search" list="titles" autocomplete="off">
+      <datalist id="titles"></datalist>
       <span class="count" id="count"></span>
     </div>
     <div class="more-filters" id="moreFilters" hidden>
-      <label>Género<select id="fGenre"><option value="">Todos</option></select></label>
-      <label>Duración<select id="fDur"><option value="0">Cualquiera</option><option value="100">Hasta 1 h 40</option><option value="120">Hasta 2 h</option><option value="150">Hasta 2 h 30</option></select></label>
-      <label>País<select id="fCountry"><option value="">Todos</option></select></label>
-      <label>Empieza desde<select id="fFrom"><option value="">Cualquier hora</option></select></label>
-      <label>Acaba antes de<select id="fUntil"><option value="">Cualquier hora</option></select></label>
-      <label id="nearWrap">Cerca del metro<select id="fNear"><option value="">Cualquier sitio</option></select></label>
-      <label>A menos de<select id="fRadius"><option value="1">1 km</option><option value="2" selected>2 km</option><option value="4">4 km</option></select></label>
-      <button class="pill" id="fWomen" type="button" aria-pressed="false" title="Según Wikidata: al menos una directora">Dirigida por mujeres</button>
-      <button class="pill" id="fQueer" type="button" aria-pressed="false" title="Según Wikidata, o sesión de un festival o ciclo queer">Cine LGTBIQ+</button>
-      <button class="pill" id="fClassic" type="button" aria-pressed="false">Solo clásicos (antes de 2000)</button>
-      <button class="pill" id="fReset" type="button">Quitar filtros</button>
+      <label><span data-i18n="genre"></span><select id="fGenre"><option value="" data-i18n="all"></option></select></label>
+      <label><span data-i18n="length"></span><select id="fDur"><option value="0" data-i18n="any"></option><option value="100">≤ 1 h 40</option><option value="120">≤ 2 h</option><option value="150">≤ 2 h 30</option></select></label>
+      <label><span data-i18n="country"></span><select id="fCountry"><option value="" data-i18n="all"></option></select></label>
+      <label><span data-i18n="from"></span><select id="fFrom"><option value="" data-i18n="anyTime"></option></select></label>
+      <label><span data-i18n="until"></span><select id="fUntil"><option value="" data-i18n="anyTime"></option></select></label>
+      <label id="nearWrap"><span data-i18n="near"></span><select id="fNear"><option value="" data-i18n="anywhere"></option></select></label>
+      <label><span data-i18n="within"></span><select id="fRadius"><option value="1">1 km</option><option value="2" selected>2 km</option><option value="4">4 km</option></select></label>
+      <button class="pill tog" id="fTracked" type="button" aria-pressed="false" data-i18n="onlyTracked"></button>
+      <button class="pill tog" id="fWatch" type="button" aria-pressed="false" data-i18n="onlyWatchlist"></button>
+      <button class="pill tog" id="fWomen" type="button" aria-pressed="false" data-i18n="women"></button>
+      <button class="pill tog" id="fQueer" type="button" aria-pressed="false" data-i18n="queer"></button>
+      <button class="pill tog" id="fNew" type="button" aria-pressed="false" data-i18n="onlyNew"></button>
+      <button class="pill tog" id="fClassic" type="button" aria-pressed="false" data-i18n="classics"></button>
+      <button class="pill" id="fReset" type="button" data-i18n="reset"></button>
     </div>
   </div>
 </div>
 
 <main class="wrap">
+  <div id="tracked" class="tracked" hidden></div>
   <div id="list"></div>
   <section class="fest" id="fest"></section>
+  <section class="fest" id="cal"></section>
 </main>
 
 <footer class="wrap">
-  <p>Horarios de Filmaffinity, de las webs de Cines Verdi y Filmoteca Española (Cine Doré), y de eCartelera para los cines que faltan. Festivales y ciclos de Cineteca Madrid (Matadero) y del Cine Doré. Notas de Filmaffinity, IMDb y Letterboxd.</p>
-  <p>Precios orientativos de eCartelera, salvo Verdi (precio por sesión de su web). Pueden estar desactualizados: compruébalos al comprar. Tus cines favoritos y descuentos se guardan solo en este navegador.</p>
-  <p>Mapa: © colaboradores de OpenStreetMap. Datos del <span id="stamp2"></span>.</p>
+  <p data-i18n="foot1"></p>
+  <p data-i18n="foot2"></p>
+  <p><span data-i18n="foot3"></span> <span id="stamp2"></span>.</p>
 </footer>
 
 <div class="scrim" id="scrim" hidden></div>
 <aside class="panel" id="panel" hidden aria-modal="true" role="dialog" aria-labelledby="panelTitle">
-  <div class="panel-head"><h3 id="panelTitle"></h3><button class="close" id="close" type="button" aria-label="Cerrar">×</button></div>
+  <div class="panel-head"><h3 id="panelTitle"></h3><button class="close" id="close" type="button">×</button></div>
   <div class="panel-body" id="panelBody"></div>
 </aside>
 
 <script type="application/json" id="data">__DATA__</script>
 <script type="application/json" id="mapdata">__MAP__</script>
 <script type="application/json" id="metrodata">__METRO__</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 (function () {
   const D = JSON.parse(document.getElementById("data").textContent);
   const M = JSON.parse(document.getElementById("mapdata").textContent);
-  const WD = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
-  const WDL = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+  const METRO = JSON.parse(document.getElementById("metrodata").textContent || "[]");
+  const REPO = "https://github.com/giraudirene/vamos-al-cine";
+
+  // ---------- language ----------
+  const L = {
+    es: {
+      tagline: "Las películas mejor valoradas en los cines de Madrid, con sus horarios.", score: "Nota", avg: "Media", cinemas: "Cines",
+      myFilms: "Mis películas", myDisc: "Mis descuentos", soon: "Empieza pronto", voseOnly: "Solo VOSE", myCinemas: "★ Mis cines",
+      votes100: "+100 votos", filters: "Filtros", search: "Película, director o cine", genre: "Género", all: "Todos", length: "Duración",
+      any: "Cualquiera", country: "País", from: "Empieza desde", until: "Acaba antes de", anyTime: "Cualquier hora", near: "Cerca del metro",
+      anywhere: "Cualquier sitio", within: "A menos de", onlyTracked: "Solo las que sigo", onlyWatchlist: "Solo mi watchlist",
+      women: "Dirigida por mujeres", queer: "Cine LGTBIQ+", onlyNew: "Solo novedades", classics: "Solo clásicos (antes de 2000)", reset: "Quitar filtros",
+      today: "Hoy", tomorrow: "Mañana", week: "Toda la semana", films: n => n + (n === 1 ? " película" : " películas"),
+      updated: (t, f, c) => `Actualizado el ${t} · ${f} películas en ${c} cines`, at: "a las",
+      none: "Ninguna sesión con estos filtros. Prueba otro día, quita «Solo VOSE» o desactiva «+100 votos».",
+      trackQuery: q => `Seguir «${q}» y avisarme cuando la pongan`, follow: "Seguir", following: "Siguiendo",
+      moreCinemas: n => `Ver ${n} cine${n > 1 ? "s" : ""} más`, by: "De", with: "con", votes: "votos", noScore: "sin nota",
+      scoreOf: s => "Nota media en " + s, from_: "desde", free: "gratis", withDisc: "con",
+      classic: "Clásico", director: "Directora", split: "Divide", splitT: d => `Las notas de Filmaffinity, IMDb y Letterboxd difieren en ${d} puntos sobre 10`,
+      isNew: "Nuevo", lastDays: "Últimos días", watch: "Watchlist",
+      trackedNow: "Películas que sigues, en cartel:", inCinemas: n => `${n} cine${n > 1 ? "s" : ""}`,
+      fest: "Festivales y ciclos", festIntro: "Sesiones de festival hoy en Cineteca Madrid, el Cine Doré, Sala Berlanga y La Casa Encendida.",
+      festNone: "No hay sesiones de festival este día.", cal: "Calendario de festivales", calIntro: "Festivales con sesiones programadas en los próximos 60 días.",
+      sessions: n => `${n} sesion${n === 1 ? "" : "es"}`, calNone: "Ningún festival programado ahora mismo.",
+      foot1: "Horarios de Filmaffinity, eCartelera y las webs de Cines Verdi, Filmoteca Española (Cine Doré), Cineteca, Círculo de Bellas Artes, Sala Berlanga, La Casa Encendida, Academia de Cine y Casa de América. Notas de Filmaffinity, IMDb y Letterboxd; directoras y cine LGTBIQ+ según Wikidata.",
+      foot2: "Precios orientativos: compruébalos al comprar. Tus cines, películas, watchlist y descuentos se guardan solo en este navegador.",
+      foot3: "Mapa © colaboradores de OpenStreetMap. Datos del",
+      // panels
+      close: "Cerrar", fav: "Favorito", addMine: "☆ Añadir a mis cines", inMine: "★ En tus cines", noLoc: "No tenemos la ubicación exacta de este cine.",
+      gmaps: "Abrir en Google Maps", listing: "Cartelera en", theSite: "la web del cine", price: "Precio", ticket: "Entrada",
+      perSession: "según sesión", noPrice: "Sin precio publicado", detail: "Detalle", yourPrice: "Tu precio",
+      discHint: "¿Tienes carnet joven, de estudiante o una tarjeta de cine?", addDisc: "Añade tus descuentos",
+      showing: d => "En cartel " + d, onlyVose: " · solo VOSE", noSess: d => `No hay sesiones ${d} con estos filtros.`, thisWeek: "esta semana",
+      zoomIn: "Acercar", zoomOut: "Alejar", map: "Mapa",
+      dirTitle: "Cines", dirSub: "Marca con ★ los tuyos para filtrar por ellos. Toca un nombre para ver dónde está y qué ponen.",
+      yours: "Tus cines", capital: "Madrid capital", region: "Resto de la Comunidad", nSess: n => `${n} sesiones`,
+      discTitle: "Mis descuentos", discSub: "Añade el precio que pagas tú con carnet joven, de estudiante, tarjetas de cine o días del espectador. Se guarda solo en este navegador.",
+      discNone: "Aún no tienes descuentos. Cuando añadas uno, verás tu precio junto a cada cine.", remove: "Quitar", newDisc: "Nuevo descuento",
+      quick: ["Carnet Joven", "Estudiante", "Menores de 25", "Tarjeta de cine", "Día del espectador"], name: "Nombre", namePh: "Por ejemplo: Carnet Joven",
+      where: "Dónde se aplica", allCinemas: "Todos los cines", chains: "Cadenas", oneCinema: "Un cine", type: "Tipo", value: "Valor", days: "Días",
+      kinds: { price: "Precio fijo (€)", pct: "Descuento (%)", off: "Euros menos (€)" }, addDiscBtn: "Añadir descuento",
+      discNote: "El precio fijo funciona aunque no sepamos el precio normal del cine. El porcentaje y los euros menos se calculan sobre el precio publicado.",
+      errName: "Ponle un nombre al descuento.", errVal: "Escribe el valor: un precio en euros o un porcentaje.", errPct: "El porcentaje no puede pasar de 100.", errDays: "Elige al menos un día.",
+      cinemasOf: c => "Cines " + c,
+      trackTitle: "Mis películas", trackSub: "Sigue películas, aunque aún no estén en cartel, e importa tu watchlist de Letterboxd. Todo se guarda solo en este navegador.",
+      tracking: "Películas que sigo", trackNone: "Aún no sigues ninguna película. Pulsa «Seguir» en una película o escribe un título aquí abajo.",
+      onNow: n => `En cartel: ${n}`, notYet: "Aún no está en cartel", addTitle: "Añadir un título", addTitlePh: "Título de la película", add: "Seguir",
+      wlTitle: "Watchlist de Letterboxd", wlHelp: "En Letterboxd: Ajustes → Data → Export your data. Sube aquí el .zip que descargas (o el archivo watchlist.csv).",
+      wlFile: "Subir exportación de Letterboxd", wlLoaded: (n, m) => `${n} películas en tu watchlist; ${m} están en cartel esta semana.`, wlClear: "Borrar watchlist",
+      wlErr: "No encuentro watchlist.csv en ese archivo. Sube el .zip de la exportación de Letterboxd o el watchlist.csv.",
+      alertsTitle: "Avisos en el móvil", alertsSteps: [
+        "Instala la app gratuita ntfy (Android, iPhone o en ntfy.sh desde el ordenador). No necesita cuenta.",
+        "En ntfy, suscríbete a este tema (es tu código secreto):",
+        "Copia estas líneas y añádelas al archivo alerts.txt de la web (o envíaselas a quien la administra). Cada mañana, cuando una película que sigues entre en cartel, te llegará un aviso."],
+      emailSoon: "Pronto: crea una cuenta para guardar tus películas en cualquier dispositivo y recibir un email cuando una que sigues entre en cartel.", copy: "Copiar", copied: "Copiado", newTopic: "Generar otro código", openAlerts: "Abrir alerts.txt en GitHub", nothingToCopy: "Sigue alguna película para generar las líneas.",
+    },
+    en: {
+      tagline: "The best-rated films in Madrid's cinemas, with their showtimes.", score: "Score", avg: "Average", cinemas: "Cinemas",
+      myFilms: "My films", myDisc: "My discounts", soon: "Starting soon", voseOnly: "Original version only", myCinemas: "★ My cinemas",
+      votes100: "100+ votes", filters: "Filters", search: "Film, director or cinema", genre: "Genre", all: "All", length: "Length",
+      any: "Any", country: "Country", from: "Starts after", until: "Ends before", anyTime: "Any time", near: "Near metro",
+      anywhere: "Anywhere", within: "Within", onlyTracked: "Only films I follow", onlyWatchlist: "Only my watchlist",
+      women: "Directed by women", queer: "LGBTQ+ cinema", onlyNew: "New only", classics: "Classics only (before 2000)", reset: "Clear filters",
+      today: "Today", tomorrow: "Tomorrow", week: "All week", films: n => n + (n === 1 ? " film" : " films"),
+      updated: (t, f, c) => `Updated ${t} · ${f} films in ${c} cinemas`, at: "at",
+      none: "No screenings with these filters. Try another day, or turn off \"Original version only\" or \"100+ votes\".",
+      trackQuery: q => `Follow "${q}" and tell me when it's on`, follow: "Follow", following: "Following",
+      moreCinemas: n => `Show ${n} more cinema${n > 1 ? "s" : ""}`, by: "By", with: "with", votes: "votes", noScore: "no score",
+      scoreOf: s => "Average score on " + s, from_: "from", free: "free", withDisc: "with",
+      classic: "Classic", director: "Woman director", split: "Divisive", splitT: d => `Filmaffinity, IMDb and Letterboxd scores differ by ${d} points out of 10`,
+      isNew: "New", lastDays: "Last days", watch: "Watchlist",
+      trackedNow: "Films you follow, now showing:", inCinemas: n => `${n} cinema${n > 1 ? "s" : ""}`,
+      fest: "Festivals and seasons", festIntro: "Festival screenings today at Cineteca Madrid, Cine Doré, Sala Berlanga and La Casa Encendida.",
+      festNone: "No festival screenings this day.", cal: "Festival calendar", calIntro: "Festivals with screenings scheduled in the next 60 days.",
+      sessions: n => `${n} screening${n === 1 ? "" : "s"}`, calNone: "No festivals scheduled right now.",
+      foot1: "Showtimes from Filmaffinity, eCartelera and the websites of Cines Verdi, Filmoteca Española (Cine Doré), Cineteca, Círculo de Bellas Artes, Sala Berlanga, La Casa Encendida, Academia de Cine and Casa de América. Scores from Filmaffinity, IMDb and Letterboxd; women directors and LGBTQ+ films from Wikidata.",
+      foot2: "Prices are indicative: check when you buy. Your cinemas, films, watchlist and discounts are stored only in this browser.",
+      foot3: "Map © OpenStreetMap contributors. Data from",
+      close: "Close", fav: "Favourite", addMine: "☆ Add to my cinemas", inMine: "★ In your cinemas", noLoc: "We don't have this cinema's exact location.",
+      gmaps: "Open in Google Maps", listing: "Listings on", theSite: "the cinema's website", price: "Price", ticket: "Ticket",
+      perSession: "depending on screening", noPrice: "No published price", detail: "Details", yourPrice: "Your price",
+      discHint: "Got a youth card, student card or cinema pass?", addDisc: "Add your discounts",
+      showing: d => "Showing " + d, onlyVose: " · original version only", noSess: d => `No screenings ${d} with these filters.`, thisWeek: "this week",
+      zoomIn: "Zoom in", zoomOut: "Zoom out", map: "Map",
+      dirTitle: "Cinemas", dirSub: "Star your cinemas to filter by them. Tap a name to see where it is and what's on.",
+      yours: "Your cinemas", capital: "Madrid city", region: "Rest of the region", nSess: n => `${n} screenings`,
+      discTitle: "My discounts", discSub: "Add what you pay with a youth card, student card, cinema pass or discount day. Stored only in this browser.",
+      discNone: "No discounts yet. Once you add one, your price shows next to each cinema.", remove: "Remove", newDisc: "New discount",
+      quick: ["Carnet Joven", "Student", "Under 25", "Cinema card", "Discount day"], name: "Name", namePh: "For example: Carnet Joven",
+      where: "Applies to", allCinemas: "All cinemas", chains: "Chains", oneCinema: "One cinema", type: "Type", value: "Value", days: "Days",
+      kinds: { price: "Fixed price (€)", pct: "Discount (%)", off: "Euros off (€)" }, addDiscBtn: "Add discount",
+      discNote: "A fixed price works even when we don't know the cinema's normal price. Percent and euros off use the published price.",
+      errName: "Give the discount a name.", errVal: "Enter the value: a price in euros or a percentage.", errPct: "The percentage can't be over 100.", errDays: "Pick at least one day.",
+      cinemasOf: c => c + " cinemas",
+      trackTitle: "My films", trackSub: "Follow films, even before they're showing, and import your Letterboxd watchlist. Everything stays in this browser.",
+      tracking: "Films I follow", trackNone: "You don't follow any film yet. Press \"Follow\" on a film or type a title below.",
+      onNow: n => `Showing: ${n}`, notYet: "Not showing yet", addTitle: "Add a title", addTitlePh: "Film title", add: "Follow",
+      wlTitle: "Letterboxd watchlist", wlHelp: "On Letterboxd: Settings → Data → Export your data. Upload the .zip you get (or the watchlist.csv file).",
+      wlFile: "Upload Letterboxd export", wlLoaded: (n, m) => `${n} films in your watchlist; ${m} are showing this week.`, wlClear: "Clear watchlist",
+      wlErr: "I can't find watchlist.csv in that file. Upload the Letterboxd export .zip or watchlist.csv.",
+      alertsTitle: "Phone alerts", alertsSteps: [
+        "Install the free ntfy app (Android, iPhone, or ntfy.sh on a computer). No account needed.",
+        "In ntfy, subscribe to this topic (it's your secret code):",
+        "Copy these lines and add them to the site's alerts.txt file (or send them to whoever runs the site). Every morning, when a film you follow starts showing, you'll get a notification."],
+      emailSoon: "Coming soon: create an account to keep your films on any device and get an email when a film you follow starts showing.", copy: "Copy", copied: "Copied", newTopic: "Make a new code", openAlerts: "Open alerts.txt on GitHub", nothingToCopy: "Follow a film to generate the lines.",
+    },
+    fr: {
+      tagline: "Les films les mieux notés dans les cinémas de Madrid, avec leurs horaires.", score: "Note", avg: "Moyenne", cinemas: "Cinémas",
+      myFilms: "Mes films", myDisc: "Mes réductions", soon: "Commence bientôt", voseOnly: "VOST seulement", myCinemas: "★ Mes cinémas",
+      votes100: "+100 votes", filters: "Filtres", search: "Film, réalisateur ou cinéma", genre: "Genre", all: "Tous", length: "Durée",
+      any: "Toutes", country: "Pays", from: "Commence après", until: "Finit avant", anyTime: "N'importe quand", near: "Près du métro",
+      anywhere: "Partout", within: "À moins de", onlyTracked: "Seulement ceux que je suis", onlyWatchlist: "Seulement ma watchlist",
+      women: "Réalisé par des femmes", queer: "Cinéma LGBTQ+", onlyNew: "Nouveautés seulement", classics: "Classiques seulement (avant 2000)", reset: "Effacer les filtres",
+      today: "Aujourd'hui", tomorrow: "Demain", week: "Toute la semaine", films: n => n + " film" + (n === 1 ? "" : "s"),
+      updated: (t, f, c) => `Mis à jour le ${t} · ${f} films dans ${c} cinémas`, at: "à",
+      none: "Aucune séance avec ces filtres. Essayez un autre jour, ou retirez « VOST seulement » ou « +100 votes ».",
+      trackQuery: q => `Suivre « ${q} » et me prévenir quand il passe`, follow: "Suivre", following: "Suivi",
+      moreCinemas: n => `Voir ${n} cinéma${n > 1 ? "s" : ""} de plus`, by: "De", with: "avec", votes: "votes", noScore: "pas de note",
+      scoreOf: s => "Note moyenne sur " + s, from_: "dès", free: "gratuit", withDisc: "avec",
+      classic: "Classique", director: "Réalisatrice", split: "Divise", splitT: d => `Les notes Filmaffinity, IMDb et Letterboxd diffèrent de ${d} points sur 10`,
+      isNew: "Nouveau", lastDays: "Derniers jours", watch: "Watchlist",
+      trackedNow: "Films que vous suivez, à l'affiche :", inCinemas: n => `${n} cinéma${n > 1 ? "s" : ""}`,
+      fest: "Festivals et cycles", festIntro: "Séances de festival aujourd'hui à la Cineteca Madrid, au Cine Doré, à la Sala Berlanga et à La Casa Encendida.",
+      festNone: "Pas de séance de festival ce jour-là.", cal: "Calendrier des festivals", calIntro: "Festivals avec des séances prévues dans les 60 prochains jours.",
+      sessions: n => `${n} séance${n === 1 ? "" : "s"}`, calNone: "Aucun festival programmé pour l'instant.",
+      foot1: "Horaires de Filmaffinity, eCartelera et des sites des Cines Verdi, de la Filmoteca Española (Cine Doré), de la Cineteca, du Círculo de Bellas Artes, de la Sala Berlanga, de La Casa Encendida, de l'Academia de Cine et de la Casa de América. Notes Filmaffinity, IMDb et Letterboxd ; réalisatrices et films LGBTQ+ d'après Wikidata.",
+      foot2: "Prix indicatifs : vérifiez à l'achat. Vos cinémas, films, watchlist et réductions restent dans ce navigateur.",
+      foot3: "Carte © contributeurs OpenStreetMap. Données du",
+      close: "Fermer", fav: "Favori", addMine: "☆ Ajouter à mes cinémas", inMine: "★ Dans vos cinémas", noLoc: "Nous n'avons pas l'adresse exacte de ce cinéma.",
+      gmaps: "Ouvrir dans Google Maps", listing: "Programme sur", theSite: "le site du cinéma", price: "Prix", ticket: "Place",
+      perSession: "selon la séance", noPrice: "Prix non publié", detail: "Détail", yourPrice: "Votre prix",
+      discHint: "Vous avez une carte jeune, étudiante ou une carte de cinéma ?", addDisc: "Ajoutez vos réductions",
+      showing: d => "À l'affiche " + d, onlyVose: " · VOST seulement", noSess: d => `Aucune séance ${d} avec ces filtres.`, thisWeek: "cette semaine",
+      zoomIn: "Zoomer", zoomOut: "Dézoomer", map: "Carte",
+      dirTitle: "Cinémas", dirSub: "Mettez une ★ à vos cinémas pour filtrer. Touchez un nom pour voir où il est et ce qui passe.",
+      yours: "Vos cinémas", capital: "Madrid ville", region: "Reste de la région", nSess: n => `${n} séances`,
+      discTitle: "Mes réductions", discSub: "Ajoutez ce que vous payez avec une carte jeune, étudiante, de cinéma ou un jour réduit. Enregistré seulement dans ce navigateur.",
+      discNone: "Pas encore de réduction. Une fois ajoutée, votre prix s'affiche à côté de chaque cinéma.", remove: "Retirer", newDisc: "Nouvelle réduction",
+      quick: ["Carnet Joven", "Étudiant", "Moins de 25 ans", "Carte de cinéma", "Jour réduit"], name: "Nom", namePh: "Par exemple : Carnet Joven",
+      where: "S'applique à", allCinemas: "Tous les cinémas", chains: "Chaînes", oneCinema: "Un cinéma", type: "Type", value: "Valeur", days: "Jours",
+      kinds: { price: "Prix fixe (€)", pct: "Réduction (%)", off: "Euros en moins (€)" }, addDiscBtn: "Ajouter la réduction",
+      discNote: "Le prix fixe marche même sans prix normal connu. Le pourcentage et les euros en moins partent du prix publié.",
+      errName: "Donnez un nom à la réduction.", errVal: "Indiquez la valeur : un prix en euros ou un pourcentage.", errPct: "Le pourcentage ne peut pas dépasser 100.", errDays: "Choisissez au moins un jour.",
+      cinemasOf: c => "Cinémas " + c,
+      trackTitle: "Mes films", trackSub: "Suivez des films, même avant leur sortie, et importez votre watchlist Letterboxd. Tout reste dans ce navigateur.",
+      tracking: "Films que je suis", trackNone: "Vous ne suivez aucun film. Appuyez sur « Suivre » sur un film ou tapez un titre ci-dessous.",
+      onNow: n => `À l'affiche : ${n}`, notYet: "Pas encore à l'affiche", addTitle: "Ajouter un titre", addTitlePh: "Titre du film", add: "Suivre",
+      wlTitle: "Watchlist Letterboxd", wlHelp: "Sur Letterboxd : Settings → Data → Export your data. Déposez ici le .zip obtenu (ou le fichier watchlist.csv).",
+      wlFile: "Déposer l'export Letterboxd", wlLoaded: (n, m) => `${n} films dans votre watchlist ; ${m} passent cette semaine.`, wlClear: "Effacer la watchlist",
+      wlErr: "Je ne trouve pas watchlist.csv dans ce fichier. Déposez le .zip d'export Letterboxd ou watchlist.csv.",
+      alertsTitle: "Alertes sur le téléphone", alertsSteps: [
+        "Installez l'appli gratuite ntfy (Android, iPhone, ou ntfy.sh sur ordinateur). Pas besoin de compte.",
+        "Dans ntfy, abonnez-vous à ce sujet (c'est votre code secret) :",
+        "Copiez ces lignes et ajoutez-les au fichier alerts.txt du site (ou envoyez-les à la personne qui gère le site). Chaque matin, quand un film suivi arrive à l'affiche, vous recevrez une alerte."],
+      emailSoon: "Bientôt : créez un compte pour retrouver vos films sur tous vos appareils et recevoir un e-mail quand un film suivi arrive à l’affiche.", copy: "Copier", copied: "Copié", newTopic: "Nouveau code", openAlerts: "Ouvrir alerts.txt sur GitHub", nothingToCopy: "Suivez un film pour générer les lignes.",
+    },
+  };
+  const WDS = { es: ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"], en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], fr: ["dim", "lun", "mar", "mer", "jeu", "ven", "sam"] };
+  const WDLS = { es: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"], en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], fr: ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"] };
+  const GENRES = {
+    es: { Drama: "Drama", Comedy: "Comedia", Documentary: "Documental", Animation: "Animación", Horror: "Terror", Thriller: "Thriller", Romance: "Romance", Action: "Acción", Adventure: "Aventura", Crime: "Crimen", Family: "Familiar", Fantasy: "Fantasía", "Sci-Fi": "Ciencia ficción", Mystery: "Misterio", History: "Historia", Biography: "Biografía", Music: "Música", Musical: "Musical", War: "Bélica", Western: "Western", Sport: "Deporte", Short: "Cortometraje" },
+    fr: { Drama: "Drame", Comedy: "Comédie", Documentary: "Documentaire", Animation: "Animation", Horror: "Horreur", Thriller: "Thriller", Romance: "Romance", Action: "Action", Adventure: "Aventure", Crime: "Policier", Family: "Famille", Fantasy: "Fantastique", "Sci-Fi": "Science-fiction", Mystery: "Mystère", History: "Histoire", Biography: "Biopic", Music: "Musique", Musical: "Comédie musicale", War: "Guerre", Western: "Western", Sport: "Sport", Short: "Court métrage" },
+    en: {},
+  };
+  let lang = "es";
+  try { const sl = localStorage.getItem("vamosalcine.lang"); if (L[sl]) lang = sl; else if (/^en/i.test(navigator.language)) lang = "en"; else if (/^fr/i.test(navigator.language)) lang = "fr"; } catch (e) {}
+  const T = k => L[lang][k];
+  const WD = () => WDS[lang], WDL = () => WDLS[lang];
+
   const pad = n => String(n).padStart(2, "0");
   const iso = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
   const parse = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  const norm = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-  const eur = p => p.toFixed(2).replace(".", ",") + " €";
+  const norm = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const eur = p => p === 0 ? T("free") : p.toFixed(2).replace(".", lang === "en" ? "." : ",") + " €";
+  const num = (x, d) => x.toFixed(d).replace(".", lang === "en" ? "." : ",");
   const MIN_VOTES = 100;
   const LAT0 = 40.4168, LON0 = -3.7038, KX = Math.cos(LAT0 * Math.PI / 180) * 111.32, KY = 110.54;
   const proj = (lat, lon) => [(lon - LON0) * KX, -(lat - LAT0) * KY];
+  const km = (a, b) => Math.hypot((a.lon - b.lon) * KX, (a.lat - b.lat) * KY);
+  const $ = id => document.getElementById(id);
 
   const now = new Date(), todayIso = iso(now), nowMin = now.getHours() * 60 + now.getMinutes();
-  const dates = [...new Set(D.shows.map(s => s[2]).concat(D.events.map(e => e.date)))].sort();
+  const toMin = t => { const m = +t.slice(0, 2) * 60 + +t.slice(3); return m < 300 ? m + 1440 : m; };   // after-midnight sessions count as late
+  const isPast = s => s[2] === todayIso && toMin(s[3]) < nowMin - 10;
+  D.shows = D.shows.filter(s => s[2] >= todayIso);                // the data file can be a day old
+  const dates = [...new Set(D.shows.map(s => s[2]).concat(D.events.map(e => e.date).filter(d => d >= todayIso)))].sort();
 
-  // Doré festival sessions join the festival list
-  const FEST_RE = /festival|queercinemad|muestra|semana de/i;
+  // films: all titles a person might type, last screening date
+  const lastDate = {};
+  D.shows.forEach(s => { if (!lastDate[s[0]] || s[2] > lastDate[s[0]]) lastDate[s[0]] = s[2]; });
+  D.films.forEach((f, i) => { f.keys = [...new Set([f.t, f.en, f.orig].filter(Boolean).map(norm))]; f.idx = i; });
+  D.shows.forEach(s => { if (s[6] && /queer|lgtb|lgbt|orgullo|pride/i.test(s[6])) D.films[s[0]].qu = 1; });
+  const daysSince = d => Math.round((parse(todayIso) - parse(d)) / 864e5);
+  const isNew = f => f.fs && daysSince(f.fs) <= 7;
+  const isLast = f => D.full_week && lastDate[f.idx] && Math.round((parse(lastDate[f.idx]) - parse(todayIso)) / 864e5) <= 1;
+
+  // Doré / Berlanga / Casa Encendida festival sessions join today's festival list
+  const FEST_RE = /festival|queercinemad|muestra|semana de|m.rgenes|documenta|animadrid|cine por mujeres/i;
+  // one calendar row per festival, whatever each venue calls it
+  const FEST_NAMES = [[/cine por mujeres/i, "Cine por Mujeres Madrid"], [/queercinemad/i, "QueerCineMad"], [/m.rgenes/i, "Festival Márgenes"],
+    [/mi primer festival/i, "Mi Primer Festival"], [/documenta/i, "Documenta Madrid"], [/animadrid/i, "Animadrid"]];
   D.shows.forEach(s => {
     if (s[6] && FEST_RE.test(s[6])) {
       const f = D.films[s[0]];
-      D.events.push({ date: s[2], times: [s[3]], t: f.t + (f.y ? " (" + f.y + ")" : ""), u: f.u, rt: f.rt, sec: "", cyc: s[6], desc: f.d ? "De " + f.d : "", w: D.cinemas[s[1]].n });
+      D.events.push({ date: s[2], times: [s[3]], t: f.t + (f.y ? " (" + f.y + ")" : ""), u: f.u, rt: f.rt, sec: "", cyc: s[6], desc: f.d ? f.d : "", w: D.cinemas[s[1]].n });
     }
   });
   D.events.sort((a, b) => (a.date + a.times[0]).localeCompare(b.date + b.times[0]));
 
+  const spreadOf = f => { const xs = [f.r, f.ir, f.lr != null ? f.lr * 2 : null].filter(x => x != null); return xs.length >= 2 ? Math.max(...xs) - Math.min(...xs) : 0; };
   const SRC = {
     fa: { name: "Filmaffinity", get: f => ({ r: f.r, v: f.v || 0, max: 10, url: f.u }) },
     im: { name: "IMDb", get: f => ({ r: f.ir, v: f.iv || 0, max: 10, url: f.imdb ? "https://www.imdb.com/title/" + f.imdb + "/" : "" }) },
     lb: { name: "Letterboxd", get: f => ({ r: f.lr, v: f.lv || 0, max: 5, url: f.lu }) },
-    av: { name: "la media", get: f => {
+    av: { name: "", get: f => {
       const xs = [f.r, f.ir, f.lr != null ? f.lr * 2 : null].filter(x => x != null);
       return { r: xs.length >= 2 ? xs.reduce((a, b) => a + b, 0) / xs.length : null, v: (f.v || 0) + (f.iv || 0) + (f.lv || 0), max: 10, url: "" };
     } },
   };
-  const spread = f => { const xs = [f.r, f.ir, f.lr != null ? f.lr * 2 : null].filter(x => x != null); return xs.length >= 2 ? Math.max(...xs) - Math.min(...xs) : 0; };
-  const METRO = JSON.parse(document.getElementById("metrodata").textContent || "[]");
-  const GENRE_ES = { Drama: "Drama", Comedy: "Comedia", Documentary: "Documental", Animation: "Animación", Horror: "Terror", Thriller: "Thriller", Romance: "Romance",
-    Action: "Acción", Adventure: "Aventura", Crime: "Crimen", Family: "Familiar", Fantasy: "Fantasía", "Sci-Fi": "Ciencia ficción", Mystery: "Misterio",
-    History: "Historia", Biography: "Biografía", Music: "Música", Musical: "Musical", War: "Bélica", Western: "Western", Sport: "Deporte", Short: "Cortometraje" };
-  const km = (a, b) => Math.hypot((a.lon - b.lon) * KX, (a.lat - b.lat) * KY);
+  const srcName = k => k === "av" ? T("avg") : SRC[k].name;
 
-  // ---------- per-viewer state ----------
-  const state = { day: dates.includes(todayIso) ? todayIso : dates[0], now: false, vose: false, few: true, favOnly: false, src: "fa", q: "", open: new Set(), favs: new Set(), discounts: [],
-    genre: "", dur: 0, country: "", from: "", until: "", near: "", radius: 2, classic: false, women: false, queer: false, filtOpen: false };
+  // ---------- per-viewer state (this browser only) ----------
+  const KEY = "vamosalcine.v1";
+  const state = { day: dates.includes(todayIso) ? todayIso : dates[0], now: false, vose: false, few: true, favOnly: false, src: "fa", q: "",
+    open: new Set(), favs: new Set(), discounts: [], track: [], wl: [], topic: "",
+    genre: "", dur: 0, country: "", from: "", until: "", near: "", radius: 2,
+    classic: false, women: false, queer: false, onlyTracked: false, onlyWatch: false, onlyNew: false, filtOpen: false };
   const faMissing = D.films.filter(f => f.r != null).length < D.films.length * .3;   // Filmaffinity blocked or stale today
   if (faMissing) state.src = "av";
   try {
-    const s = JSON.parse(localStorage.getItem("vamosalcine.v1") || "{}");
+    const s = JSON.parse(localStorage.getItem(KEY) || "{}");
     ["vose", "few", "favOnly"].forEach(k => { if (typeof s[k] === "boolean") state[k] = s[k]; });
     if (SRC[s.src] && !(faMissing && s.src === "fa")) state.src = s.src;
     if (Array.isArray(s.favs)) state.favs = new Set(s.favs);
-    if (Array.isArray(s.discounts)) state.discounts = s.discounts;
+    ["discounts", "track", "wl"].forEach(k => { if (Array.isArray(s[k])) state[k] = s[k]; });
     if (typeof s.near === "string") state.near = s.near;
     if (typeof s.radius === "number") state.radius = s.radius;
+    if (typeof s.topic === "string") state.topic = s.topic;
   } catch (e) {}
-  const save = () => { try { localStorage.setItem("vamosalcine.v1", JSON.stringify({ vose: state.vose, few: state.few, favOnly: state.favOnly, src: state.src, favs: [...state.favs], discounts: state.discounts, near: state.near, radius: state.radius })); } catch (e) {} };
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ vose: state.vose, few: state.few, favOnly: state.favOnly, src: state.src,
+    favs: [...state.favs], discounts: state.discounts, track: state.track, wl: state.wl, near: state.near, radius: state.radius, topic: state.topic })); } catch (e) {} };
+
   const isFav = c => state.favs.has(D.cinemas[c].n);
   function toggleFav(c) { const n = D.cinemas[c].n; state.favs.has(n) ? state.favs.delete(n) : state.favs.add(n); if (!state.favs.size) state.favOnly = false; save(); render(); refreshPanel(); }
 
-  // ---------- prices ----------
-  function scopeMatches(d, c) {
-    const C = D.cinemas[c];
-    return d.scope === "all" || d.scope === "chain:" + C.ch || d.scope === "cinema:" + C.n;
+  // tracked films and watchlist: matched by any title (Spanish, English, original) and, for the watchlist, year ± 1
+  const trackKeys = () => new Set(state.track.map(t => norm(t)));
+  const isTracked = f => { const k = trackKeys(); return f.keys.some(x => k.has(x)); };
+  function toggleTrack(f) {
+    if (isTracked(f)) state.track = state.track.filter(t => !f.keys.includes(norm(t)));
+    else state.track.push(f.t);
+    save(); render(); refreshPanel();
   }
+  const inWatchlist = f => state.wl.some(w => f.keys.includes(norm(w.n)) && (!w.y || !f.y || Math.abs(w.y - f.y) <= 1));
+
+  // ---------- prices ----------
+  const scopeMatches = (d, c) => { const C = D.cinemas[c]; return d.scope === "all" || d.scope === "chain:" + C.ch || d.scope === "cinema:" + C.n; };
   function priceFor(c, date, sessionPrice) {
     const base = sessionPrice ?? D.cinemas[c].p ?? null;
     const dow = parse(date).getDay();
@@ -372,184 +606,228 @@ footer a { color: inherit; }
     const baseTxt = lo == null ? "" : (lo === hi ? eur(lo) : eur(lo) + "–" + eur(hi));
     if (deals.length) {
       const d = deals.reduce((a, b) => a.best.p <= b.best.p ? a : b).best;
-      return `<span class="price">${baseTxt ? "<s>" + baseTxt + "</s> " : ""}<span class="deal">${eur(d.p)}</span> con ${esc(d.name)}</span>`;
+      return `<span class="price">${baseTxt ? "<s>" + baseTxt + "</s> " : ""}<span class="deal">${eur(d.p)}</span> ${T("withDisc")} ${esc(d.name)}</span>`;
     }
-    return baseTxt ? `<span class="price">desde ${baseTxt}</span>` : "";
+    return baseTxt ? `<span class="price">${lo === 0 ? "" : T("from_") + " "}${baseTxt}</span>` : "";
   }
 
-  // ---------- header ----------
-  const scraped = new Date(D.scraped);
-  const stampTxt = WDL[scraped.getDay()].toLowerCase() + " " + scraped.getDate() + "/" + (scraped.getMonth() + 1) + " a las " + pad(scraped.getHours()) + ":" + pad(scraped.getMinutes());
-  document.getElementById("stamp").textContent = "Actualizado el " + stampTxt + " · " + D.films.length + " películas en " + D.cinemas.length + " cines";
-  document.getElementById("stamp2").textContent = stampTxt;
+  // ---------- filters ----------
+  const fillSelect = (el, items) => { el.querySelectorAll("option:not(:first-child)").forEach(o => o.remove()); el.insertAdjacentHTML("beforeend", items.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join("")); };
+  const hours = []; for (let h = 10; h <= 24; h++) hours.push([pad(h % 24) + ":00", pad(h % 24) + ":00"]);
+  const metroOf = name => { const m = METRO.find(x => x[0] === name); return m ? { lat: m[1], lon: m[2] } : null; };
+  const distTo = c => { const st = metroOf(state.near), C = D.cinemas[c]; return st && C.lat != null ? km(C, st) : null; };
+  function fillFilterOptions() {
+    const g = $("fGenre").value || state.genre;
+    fillSelect($("fGenre"), [...new Set(D.films.flatMap(f => f.g || []))].map(x => [x, GENRES[lang][x] || x]).sort((a, b) => a[1].localeCompare(b[1], lang)));
+    $("fGenre").value = g;
+    fillSelect($("fCountry"), [...new Set(D.films.map(f => f.c).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es")).map(c => [c, c]));
+    fillSelect($("fFrom"), hours.slice(0, -1)); fillSelect($("fUntil"), hours.slice(2));
+    if (METRO.length) fillSelect($("fNear"), METRO.map(m => [m[0], m[0]])); else $("nearWrap").hidden = true;
+    [["fGenre", "genre"], ["fCountry", "country"], ["fFrom", "from"], ["fUntil", "until"], ["fNear", "near"]].forEach(([id, k]) => { $(id).value = state[k]; });
+    $("fDur").value = String(state.dur); $("fRadius").value = String(state.radius);
+    $("titles").innerHTML = [...new Set(D.films.flatMap(f => [f.t, f.en].filter(Boolean)))].sort((a, b) => a.localeCompare(b, "es")).map(t => `<option value="${esc(t)}">`).join("");
+  }
+  [["fGenre", "genre"], ["fCountry", "country"], ["fFrom", "from"], ["fUntil", "until"], ["fNear", "near"]].forEach(([id, k]) => {
+    $(id).addEventListener("change", e => { state[k] = e.target.value; save(); render(); });
+  });
+  $("fDur").addEventListener("change", e => { state.dur = +e.target.value; render(); });
+  $("fRadius").addEventListener("change", e => { state.radius = +e.target.value; save(); render(); });
+  const TOGGLES = [["fClassic", "classic"], ["fWomen", "women"], ["fQueer", "queer"], ["fTracked", "onlyTracked"], ["fWatch", "onlyWatch"], ["fNew", "onlyNew"]];
+  TOGGLES.forEach(([id, k]) => $(id).addEventListener("click", () => { state[k] = !state[k]; render(); }));
+  $("filt").addEventListener("click", () => { state.filtOpen = !state.filtOpen; $("moreFilters").hidden = !state.filtOpen; $("filt").setAttribute("aria-expanded", state.filtOpen); });
+  $("fReset").addEventListener("click", () => {
+    Object.assign(state, { genre: "", dur: 0, country: "", from: "", until: "", near: "", classic: false, women: false, queer: false, onlyTracked: false, onlyWatch: false, onlyNew: false });
+    save(); fillFilterOptions(); render();
+  });
+  const activeFilters = () => [state.genre, state.dur, state.country, state.from, state.until, state.near, ...TOGGLES.map(([, k]) => state[k])].filter(Boolean).length;
+  const filmOk = f => (!state.genre || (f.g || []).includes(state.genre)) && (!state.dur || (f.rt && f.rt <= state.dur)) &&
+    (!state.country || f.c === state.country) && (!state.classic || (f.y && f.y < 2000)) && (!state.women || f.wo) && (!state.queer || f.qu) &&
+    (!state.onlyTracked || isTracked(f)) && (!state.onlyWatch || inWatchlist(f)) && (!state.onlyNew || isNew(f));
 
+  // ---------- header controls ----------
+  const daysEl = $("days");
   function dayLabel(d) {
-    if (d === "all") return "Toda la semana";
+    if (d === "all") return T("week");
     const dt = parse(d), diff = Math.round((dt - parse(todayIso)) / 864e5);
-    return (diff === 0 ? "Hoy" : diff === 1 ? "Mañana" : WDL[dt.getDay()]) + " <small>" + dt.getDate() + "</small>";
+    return (diff === 0 ? T("today") : diff === 1 ? T("tomorrow") : WDL()[dt.getDay()]) + " <small>" + dt.getDate() + "</small>";
   }
-  const daysEl = document.getElementById("days");
   daysEl.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; state.day = b.dataset.d; if (state.day !== todayIso) state.now = false; render(); refreshPanel(); });
-  const $ = id => document.getElementById(id);
   $("now").addEventListener("click", () => { if (!dates.includes(todayIso)) return; state.now = !state.now; if (state.now) state.day = todayIso; render(); });
   $("vose").addEventListener("click", () => { state.vose = !state.vose; save(); render(); refreshPanel(); });
   $("few").addEventListener("click", () => { state.few = !state.few; save(); render(); });
   $("favs").addEventListener("click", () => { if (!state.favs.size) { openDirectory(); return; } state.favOnly = !state.favOnly; save(); render(); });
   $("src").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; state.src = b.dataset.s; save(); render(); refreshPanel(); });
-  $("q").addEventListener("input", e => { state.q = norm(e.target.value.trim()); render(); });
+  $("q").addEventListener("input", e => { state.q = norm(e.target.value); render(); });
   $("openDir").addEventListener("click", () => openDirectory());
   $("openDisc").addEventListener("click", () => openDiscounts());
-  if (!dates.includes(todayIso)) { $("now").disabled = true; $("now").title = "Los datos no incluyen el día de hoy"; }
-
-  const toMin = t => { const m = +t.slice(0, 2) * 60 + +t.slice(3); return m < 300 ? m + 1440 : m; };  // after-midnight sessions count as late
-  const fillSelect = (el, items) => { el.insertAdjacentHTML("beforeend", items.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join("")); };
-  fillSelect($("fGenre"), Object.entries([...new Set(D.films.flatMap(f => f.g || []))].reduce((o, g) => (o[g] = GENRE_ES[g] || g, o), {})).sort((a, b) => a[1].localeCompare(b[1], "es")));
-  fillSelect($("fCountry"), [...new Set(D.films.map(f => f.c).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es")).map(c => [c, c]));
-  const hours = []; for (let h = 10; h <= 24; h++) hours.push([pad(h % 24) + ":00", pad(h % 24) + ":00"]);
-  fillSelect($("fFrom"), hours.slice(0, -1)); fillSelect($("fUntil"), hours.slice(2));
-  if (METRO.length) fillSelect($("fNear"), METRO.map(m => [m[0], m[0]])); else $("nearWrap").hidden = true;
-  const metroOf = name => { const m = METRO.find(x => x[0] === name); return m ? { lat: m[1], lon: m[2] } : null; };
-  const distTo = c => { const st = metroOf(state.near), C = D.cinemas[c]; return st && C.lat != null ? km(C, st) : null; };
-  [["fGenre", "genre"], ["fCountry", "country"], ["fFrom", "from"], ["fUntil", "until"], ["fNear", "near"]].forEach(([id, k]) => {
-    $(id).value = state[k]; $(id).addEventListener("change", e => { state[k] = e.target.value; save(); render(); });
+  $("openTrack").addEventListener("click", () => openTracking());
+  document.querySelector(".lang").addEventListener("click", e => {
+    const b = e.target.closest("[data-lang]"); if (!b) return;
+    lang = b.dataset.lang; try { localStorage.setItem("vamosalcine.lang", lang); } catch (err) {}
+    applyLang(); render(); refreshPanel();
   });
-  $("fDur").addEventListener("change", e => { state.dur = +e.target.value; render(); });
-  $("fRadius").value = String(state.radius);
-  $("fRadius").addEventListener("change", e => { state.radius = +e.target.value; save(); render(); });
-  $("fClassic").addEventListener("click", () => { state.classic = !state.classic; render(); });
-  $("fWomen").addEventListener("click", () => { state.women = !state.women; render(); });
-  $("fQueer").addEventListener("click", () => { state.queer = !state.queer; render(); });
-  // queer festival / cycle sessions mark the film as LGTBIQ+ too
-  D.shows.forEach(s => { if (s[6] && /queer|lgtb|lgbt|orgullo|pride/i.test(s[6])) D.films[s[0]].qu = 1; });
-  $("filt").addEventListener("click", () => { state.filtOpen = !state.filtOpen; $("moreFilters").hidden = !state.filtOpen; $("filt").setAttribute("aria-expanded", state.filtOpen); });
-  $("fReset").addEventListener("click", () => {
-    Object.assign(state, { genre: "", dur: 0, country: "", from: "", until: "", near: "", classic: false, women: false, queer: false });
-    ["fGenre", "fCountry", "fFrom", "fUntil", "fNear"].forEach(id => $(id).value = ""); $("fDur").value = "0"; save(); render();
-  });
-  const activeFilters = () => [state.genre, state.dur, state.country, state.from, state.until, state.near, state.classic, state.women, state.queer].filter(Boolean).length;
-  const filmOk = f => (!state.genre || (f.g || []).includes(state.genre)) && (!state.dur || (f.rt && f.rt <= state.dur)) &&
-    (!state.country || f.c === state.country) && (!state.classic || (f.y && f.y < 2000)) &&
-    (!state.women || f.wo) && (!state.queer || f.qu);
-  const isPast = s => s[2] === todayIso && toMin(s[3]) < nowMin - 10;
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-i18n]").forEach(el => { const v = T(el.dataset.i18n); if (typeof v === "string") el.textContent = v; });
+    document.querySelectorAll("[data-lang]").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang === lang));
+    $("q").placeholder = T("search"); $("q").setAttribute("aria-label", T("search"));
+    $("close").setAttribute("aria-label", T("close"));
+    const sc = new Date(D.scraped);
+    const st = WDL()[sc.getDay()].toLowerCase() + " " + sc.getDate() + "/" + (sc.getMonth() + 1) + " " + T("at") + " " + pad(sc.getHours()) + ":" + pad(sc.getMinutes());
+    $("stamp").textContent = T("updated")(st, D.films.length, D.cinemas.length);
+    $("stamp2").textContent = st;
+    if (!dates.includes(todayIso)) { $("now").disabled = true; }
+    fillFilterOptions();
+  }
 
   function stubHtml(f, small) {
     const R = SRC[state.src].get(f);
-    if (R.r == null) return small ? `<span class="sc" style="color:var(--muted)">–</span>` : `<div class="stub none" title="Sin nota en ${SRC[state.src].name}"><div class="n">–</div><div class="v">sin nota</div></div>`;
-    const val = R.max === 5 ? R.r.toFixed(2).replace(".", ",") : R.r.toFixed(1).replace(".", ",");
+    if (R.r == null) return small ? `<span class="sc muted">–</span>` : `<div class="stub none" title="${esc(T("noScore"))}"><div class="n">–</div><div class="v">${T("noScore")}</div></div>`;
+    const val = R.max === 5 ? num(R.r, 2) : num(R.r, 1);
     if (small) return `<span class="sc">${val}</span>`;
     const tag = R.url ? "a" : "div";
-    return `<${tag} class="stub${R.v < MIN_VOTES ? " few" : ""}"${R.url ? ` href="${esc(R.url)}" target="_blank" rel="noopener"` : ""} title="Nota media en ${SRC[state.src].name}">
-      <div class="n">${val}${R.max === 5 ? "<small>/5</small>" : ""}</div><div class="v">${R.v.toLocaleString("es-ES")} votos</div></${tag}>`;
+    return `<${tag} class="stub${R.v < MIN_VOTES ? " few" : ""}"${R.url ? ` href="${esc(R.url)}" target="_blank" rel="noopener"` : ""} title="${esc(T("scoreOf")(srcName(state.src)))}">
+      <div class="n">${val}${R.max === 5 ? "<small>/5</small>" : ""}</div><div class="v">${R.v.toLocaleString(lang)} ${T("votes")}</div></${tag}>`;
   }
   const sortFilms = (a, b) => { const A = SRC[state.src].get(a), B = SRC[state.src].get(b); return (B.r ?? -1) / B.max - (A.r ?? -1) / A.max || B.v - A.v; };
   const chipsHtml = (list, multi) => list.map(s =>
-    `<span class="t${s[4] ? " vo" : ""}${isPast(s) ? " past" : ""}"${s[5] != null ? ` title="${eur(s[5])}"` : ""}>${multi ? `<span class="d">${WD[parse(s[2]).getDay()]}</span>` : ""}${s[3]}</span>`).join("");
-
-  function filteredShows(extra) {
-    const q = state.q;
-    return D.shows.filter(s => {
-      if (state.day !== "all" && s[2] !== state.day) return false;
-      if (state.vose && !s[4]) return false;
-      if (extra && !extra(s)) return false;
-      return true;
-    });
-  }
+    `<span class="t${s[4] ? " vo" : ""}${isPast(s) ? " past" : ""}"${s[5] != null ? ` title="${esc(eur(s[5]))}"` : ""}>${multi ? `<span class="d">${WD()[parse(s[2]).getDay()]}</span>` : ""}${s[3]}</span>`).join("");
+  const filteredShows = extra => D.shows.filter(s => (state.day === "all" || s[2] === state.day) && (!state.vose || s[4]) && (!extra || extra(s)));
+  const badges = f => (f.y && f.y < 2000 ? `<span class="badge classic">${T("classic")}</span>` : "") +
+    (isNew(f) ? `<span class="badge new">${T("isNew")}</span>` : "") + (isLast(f) ? `<span class="badge last">${T("lastDays")}</span>` : "") +
+    (f.wo ? `<span class="badge women">${T("director")}</span>` : "") + (f.qu ? `<span class="badge queer">LGTBIQ+</span>` : "") +
+    (inWatchlist(f) ? `<span class="badge wl">${T("watch")}</span>` : "") +
+    (spreadOf(f) >= 1.5 ? `<span class="badge split" title="${esc(T("splitT")(num(spreadOf(f), 1)))}">${T("split")}</span>` : "");
 
   // ---------- main list ----------
   function render() {
     daysEl.innerHTML = dates.concat(["all"]).map(d => `<button type="button" class="pill" data-d="${d}" aria-pressed="${state.day === d}">${dayLabel(d)}</button>`).join("");
     $("now").setAttribute("aria-pressed", state.now); $("vose").setAttribute("aria-pressed", state.vose); $("few").setAttribute("aria-pressed", state.few);
     $("favs").setAttribute("aria-pressed", state.favOnly);
-    $("favs").textContent = "★ Mis cines" + (state.favs.size ? " (" + state.favs.size + ")" : "");
-    $("favs").title = state.favs.size ? "Solo sesiones en tus cines favoritos" : "Marca cines con ★ para filtrar por ellos";
+    $("favs").textContent = T("myCinemas") + (state.favs.size ? " (" + state.favs.size + ")" : "");
+    $("openDisc").textContent = T("myDisc") + (state.discounts.length ? " (" + state.discounts.length + ")" : "");
+    $("openTrack").textContent = T("myFilms") + (state.track.length ? " (" + state.track.length + ")" : "");
     const nf = activeFilters();
-    $("filt").textContent = "Filtros" + (nf ? " (" + nf + ")" : ""); $("filt").classList.toggle("on", nf > 0);
-    $("fClassic").setAttribute("aria-pressed", state.classic);
-    $("fWomen").setAttribute("aria-pressed", state.women); $("fQueer").setAttribute("aria-pressed", state.queer);
-    $("openDisc").textContent = "Mis descuentos" + (state.discounts.length ? " (" + state.discounts.length + ")" : "");
+    $("filt").textContent = T("filters") + (nf ? " (" + nf + ")" : ""); $("filt").classList.toggle("on", nf > 0);
+    TOGGLES.forEach(([id, k]) => $(id).setAttribute("aria-pressed", state[k]));
+    $("fWatch").hidden = !state.wl.length; $("fTracked").hidden = !state.track.length; $("fNew").hidden = !D.films.some(isNew);
     [...$("src").children].forEach(b => b.setAttribute("aria-pressed", b.dataset.s === state.src));
-    $("few").title = "Oculta películas con menos de 100 votos en " + SRC[state.src].name;
     const q = state.q;
     const byFilm = new Map();
     for (const s of filteredShows(s => {
       if (state.favOnly && !isFav(s[1])) return false;
+      if (state.now) { const m = toMin(s[3]); if (s[2] !== todayIso || m < nowMin - 5 || m > nowMin + 180) return false; }
       if (state.from && toMin(s[3]) < toMin(state.from)) return false;
       if (state.until && toMin(s[3]) + (D.films[s[0]].rt || 110) > toMin(state.until)) return false;   // runtime unknown: assume 110 min
       if (state.near) { const d = distTo(s[1]); if (d == null || d > state.radius) return false; }
-      if (!filmOk(D.films[s[0]])) return false;
-      if (state.now) { const m = toMin(s[3]); if (s[2] !== todayIso || m < nowMin - 5 || m > nowMin + 180) return false; }
-      if (q) { const f = D.films[s[0]], c = D.cinemas[s[1]]; if (!(norm(f.t).includes(q) || norm(f.d).includes(q) || norm(c.n).includes(q))) return false; }
+      const f = D.films[s[0]];
+      if (!filmOk(f)) return false;
+      if (q && !(f.keys.some(k => k.includes(q)) || norm(f.d).includes(q) || norm(D.cinemas[s[1]].n).includes(q))) return false;
       return true;
     })) {
       if (!byFilm.has(s[0])) byFilm.set(s[0], []);
       byFilm.get(s[0]).push(s);
     }
     let films = [...byFilm.keys()].map(i => D.films[i]);
-    if (state.few) films = films.filter(f => SRC[state.src].get(f).v >= MIN_VOTES);
+    if (state.few && !q) films = films.filter(f => SRC[state.src].get(f).v >= MIN_VOTES || isTracked(f) || inWatchlist(f));
     films.sort(sortFilms);
-    $("count").textContent = films.length + (films.length === 1 ? " película" : " películas");
+    $("count").textContent = T("films")(films.length);
+
+    // films you follow / watchlist that are on (any day)
+    const onNow = D.films.filter(f => lastDate[f.idx] && (isTracked(f) || inWatchlist(f)));
+    $("tracked").hidden = !onNow.length;
+    if (onNow.length) {
+      $("tracked").innerHTML = `<b>${T("trackedNow")}</b> ` + onNow.map(f => {
+        const n = new Set(D.shows.filter(s => s[0] === f.idx).map(s => s[1])).size;
+        return `<button class="tlink" type="button" data-find="${esc(f.t)}">${esc(f.t)}</button> <span class="meta">(${T("inCinemas")(n)})</span>`;
+      }).join(" · ");
+    }
 
     const multi = state.day === "all";
-    $("list").innerHTML = !films.length
-      ? `<div class="empty">Ninguna sesión con estos filtros. Prueba otro día, quita «Solo VOSE» o desactiva «+100 votos».</div>`
-      : films.map((f, k) => {
-        const idx = D.films.indexOf(f), ss = byFilm.get(idx);
+    const rawQ = $("q").value.trim();
+    const offerTrack = rawQ.length >= 3 && !D.films.some(f => f.keys.some(k => k.includes(q))) && !state.track.some(t => norm(t) === q);
+    $("list").innerHTML = (!films.length ? `<div class="empty">${esc(T("none"))}</div>` : "") +
+      (offerTrack ? `<div class="empty"><button class="btn" type="button" id="trackQuery">${esc(T("trackQuery")(rawQ))}</button></div>` : "") +
+      films.map((f, k) => {
+        const ss = byFilm.get(f.idx);
         const byC = new Map();
         ss.forEach(s => { if (!byC.has(s[1])) byC.set(s[1], []); byC.get(s[1]).push(s); });
         let cines = [...byC.entries()].sort((a, b) => {
-          const live = x => x[1].some(s => !isPast(s));
           if (state.near) return (distTo(a[0]) ?? 99) - (distTo(b[0]) ?? 99);
+          const live = x => x[1].some(s => !isPast(s));
           return (isFav(b[0]) - isFav(a[0])) || (live(b) - live(a)) || D.cinemas[a[0]].n.localeCompare(D.cinemas[b[0]].n, "es");
         });
-        const open = state.open.has(idx), LIMIT = 5, hidden = cines.length - LIMIT;
+        const open = state.open.has(f.idx), LIMIT = 5, hidden = cines.length - LIMIT;
         if (!open && hidden > 0) cines = cines.slice(0, LIMIT);
         const rows = cines.map(([cid, list]) => {
           list.sort((a, b) => (a[2] + a[3]).localeCompare(b[2] + b[3]));
-          return `<div class="cine"><div><div class="cname"><button class="star" type="button" data-fav="${cid}" aria-pressed="${isFav(cid)}" aria-label="Favorito">★</button><button class="clink" type="button" data-cine="${cid}">${esc(D.cinemas[cid].n)}</button>${state.near && distTo(cid) != null ? `<span class="dist">${distTo(cid).toFixed(1).replace(".", ",")} km</span>` : ""}</div>${priceHtml(cid, list)}</div><div class="times">${chipsHtml(list, multi)}</div></div>`;
+          const dist = state.near && distTo(cid) != null ? `<span class="dist">${num(distTo(cid), 1)} km</span>` : "";
+          return `<div class="cine"><div><div class="cname"><button class="star" type="button" data-fav="${cid}" aria-pressed="${isFav(cid)}" aria-label="${esc(T("fav"))}">★</button><button class="clink" type="button" data-cine="${cid}">${esc(D.cinemas[cid].n)}</button>${dist}</div>${priceHtml(cid, list)}</div><div class="times">${chipsHtml(list, multi)}</div></div>`;
         }).join("");
-        const more = !open && hidden > 0 ? `<button class="more" type="button" data-open="${idx}">Ver ${hidden} cine${hidden > 1 ? "s" : ""} más</button>` : "";
-        const meta = [f.c, f.rt ? f.rt + " min" : "", f.age].filter(Boolean).map(esc).join(" · ");
-        const people = (f.d ? `De <b>${esc(f.d)}</b>` : "") + (f.cast && f.cast.length ? (f.d ? ", con " : "Con ") + esc(f.cast.join(", ")) : "");
-        const others = Object.entries(SRC).filter(([k]) => k !== state.src).map(([k, S]) => {
+        const more = !open && hidden > 0 ? `<button class="more" type="button" data-open="${f.idx}">${T("moreCinemas")(hidden)}</button>` : "";
+        const meta = [f.c, f.rt ? f.rt + " min" : "", f.age, (f.g || []).slice(0, 3).map(g => GENRES[lang][g] || g).join(", ")].filter(Boolean).map(esc).join(" · ");
+        const people = (f.d ? `${T("by")} <b>${esc(f.d)}</b>` : "") + (f.cast && f.cast.length ? (f.d ? ", " + T("with") + " " : "") + esc(f.cast.join(", ")) : "");
+        const others = Object.entries(SRC).filter(([k]) => k !== state.src && k !== "av").map(([k, S]) => {
           const R = S.get(f); if (R.r == null) return "";
-          const v = R.max === 5 ? R.r.toFixed(2).replace(".", ",") + "/5" : R.r.toFixed(1).replace(".", ",");
+          const v = R.max === 5 ? num(R.r, 2) + "/5" : num(R.r, 1);
           return R.url ? `<a href="${esc(R.url)}" target="_blank" rel="noopener">${S.name} ${v}</a>` : `${S.name} ${v}`;
         }).filter(Boolean).join(" · ");
         const img = f.img ? `<img class="poster" src="${f.img}" alt="" loading="lazy">` : `<div class="poster"></div>`;
-        return `<article class="film">
+        const tr = isTracked(f);
+        return `<article class="film${tr ? " is-tracked" : ""}">
           <div class="rank">${k + 1}</div>${img}
-          <div class="info"><h2><a href="${esc(f.u)}" target="_blank" rel="noopener">${esc(f.t)}</a>${f.y ? `<span class="yr">${f.y}</span>` : ""}${f.y && f.y < 2000 ? `<span class="badge classic">Clásico</span>` : ""}${f.wo ? `<span class="badge women" title="Según Wikidata">Directora</span>` : ""}${f.qu ? `<span class="badge queer">LGTBIQ+</span>` : ""}${spread(f) >= 1.5 ? `<span class="badge split" title="Las notas de Filmaffinity, IMDb y Letterboxd difieren en ${spread(f).toFixed(1).replace(".", ",")} puntos sobre 10">Divide</span>` : ""}</h2>
-            <div class="meta">${meta}</div><div class="meta">${people}</div>${others ? `<div class="others">${others}</div>` : ""}</div>
+          <div class="info"><h2><a href="${esc(f.u)}" target="_blank" rel="noopener">${esc(f.t)}</a>${f.y ? `<span class="yr">${f.y}</span>` : ""}${badges(f)}</h2>
+            <div class="meta">${meta}</div><div class="meta">${people}</div>${others ? `<div class="others">${others}</div>` : ""}
+            <button class="follow" type="button" data-track="${f.idx}" aria-pressed="${tr}">${tr ? "✓ " + T("following") : "+ " + T("follow")}</button></div>
           ${stubHtml(f)}
           <div class="sessions">${rows}${more}</div>
         </article>`;
       }).join("");
+    const tq = $("trackQuery"); if (tq) tq.addEventListener("click", () => { state.track.push(rawQ); save(); $("q").value = ""; state.q = ""; render(); openTracking(); });
 
-    const ev = D.events.filter(e => (state.day === "all" || e.date === state.day) && (!q || norm(e.t + " " + e.cyc + " " + e.sec + " " + e.w).includes(q)));
-    const cycles = [...new Set(D.events.map(e => e.cyc).filter(Boolean).map(c => c.replace(/\b\w/g, m => m.toUpperCase())))];
-    $("fest").innerHTML = `<h3>Festivales y ciclos</h3>
-      <p>Sesiones de festival en Cineteca Madrid (Matadero) y el Cine Doré${cycles.length ? ": " + cycles.map(esc).join(", ") : ""}.</p>` +
+    // today's festival sessions
+    const ev = D.events.filter(e => e.date >= todayIso && (state.day === "all" || e.date === state.day) && (!q || norm(e.t + " " + e.cyc + " " + e.sec + " " + e.w).includes(q)));
+    $("fest").innerHTML = `<h3>${T("fest")}</h3><p>${T("festIntro")}</p>` +
       (ev.length ? ev.map(e => {
         const dt = parse(e.date);
-        return `<div class="ev"><div class="when">${e.times.join(" · ")}<small>${WDL[dt.getDay()]} ${dt.getDate()}</small></div>
+        return `<div class="ev"><div class="when">${e.times.join(" · ")}<small>${WDL()[dt.getDay()]} ${dt.getDate()}</small></div>
           <div><span class="tag">${esc(e.cyc || e.sec)}</span> <span class="meta">· ${esc(e.w)}</span><br><a href="${esc(e.u)}" target="_blank" rel="noopener">${esc(e.t)}</a>${e.rt ? ` <span class="meta">· ${e.rt} min</span>` : ""}
           <div class="desc">${esc(e.desc)}</div></div></div>`;
-      }).join("") : `<div class="ev"><div></div><div class="desc">No hay sesiones de festival este día.</div></div>`);
+      }).join("") : `<div class="ev"><div></div><div class="desc">${T("festNone")}</div></div>`);
+
+    // festival calendar: next 60 days, grouped by festival
+    const groups = new Map();
+    (D.fest || []).filter(e => e.date >= todayIso).forEach(e => {
+      const canon = FEST_NAMES.find(([re]) => re.test(e.cyc));
+      const name = canon ? canon[1] : e.cyc.replace(/\s+/g, " ").trim(), key = canon ? canon[1] : norm(name).replace(/^\d+ /, "").slice(0, 40);
+      if (!groups.has(key)) groups.set(key, { name, canon: !!canon, venues: new Set(), list: [] });
+      const g = groups.get(key); g.venues.add(e.w); g.list.push(e);
+    });
+    const fmt = d => { const x = parse(d); return x.getDate() + " " + x.toLocaleDateString(lang, { month: "short" }); };
+    const cal = [...groups.values()].sort((a, b) => a.list[0].date.localeCompare(b.list[0].date));
+    $("cal").innerHTML = `<h3>${T("cal")}</h3><p>${T("calIntro")}</p>` + (cal.length ? cal.map(g => {
+      const first = g.list[0].date, last = g.list[g.list.length - 1].date;
+      return `<details class="calrow"><summary><span class="cdates">${fmt(first)}${last !== first ? " – " + fmt(last) : ""}</span>
+        <span class="cname2">${esc(g.canon ? g.name : g.name.replace(/(^|\s)(\p{L})/gu, (m, a, b) => a + b.toUpperCase()))}</span><span class="meta">${esc([...g.venues].join(", "))} · ${T("sessions")(g.list.length)}</span></summary>
+        <ul>${g.list.map(e => `<li><span class="when2">${WD()[parse(e.date).getDay()]} ${parse(e.date).getDate()} · ${e.time}</span> <a href="${esc(e.u)}" target="_blank" rel="noopener">${esc(e.t)}</a> <span class="meta">· ${esc(e.w)}</span></li>`).join("")}</ul></details>`;
+    }).join("") : `<p class="note">${T("calNone")}</p>`);
   }
 
   document.addEventListener("click", e => {
     const o = e.target.closest("[data-open]"); if (o) { state.open.add(+o.dataset.open); render(); return; }
     const f = e.target.closest("[data-fav]"); if (f) { toggleFav(+f.dataset.fav); return; }
     const c = e.target.closest("[data-cine]"); if (c) { openCinema(+c.dataset.cine); return; }
+    const t = e.target.closest("[data-track]"); if (t) { toggleTrack(D.films[+t.dataset.track]); return; }
+    const fd = e.target.closest("[data-find]"); if (fd) { $("q").value = fd.dataset.find; state.q = norm(fd.dataset.find); state.day = "all"; render(); window.scrollTo({ top: 0 }); return; }
   });
 
   // ---------- panel ----------
   let panelView = null, lastFocus = null;
-  function showPanel(title, html, view) {
+  function showPanel(view) {
     panelView = view;
     if ($("panel").hidden) lastFocus = document.activeElement;
-    $("panelTitle").innerHTML = title; $("panelBody").innerHTML = html;
     $("panel").hidden = false; $("scrim").hidden = false; document.body.classList.add("locked");
+    view.redraw();
     $("close").focus({ preventScroll: true });
   }
   function closePanel() {
@@ -561,16 +839,10 @@ footer a { color: inherit; }
   document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("panel").hidden) closePanel(); });
   function refreshPanel() { if (!panelView) return; const st = $("panelBody").scrollTop; panelView.redraw(); $("panelBody").scrollTop = st; }
 
-  // map
-  const mapBase = (() => {
-    const munis = M.munis.map(m => `<path d="${m.d}" />`).join("");
-    const dist = M.districts.map(m => `<path d="${m.d}" />`).join("");
-    return { munis, dist };
-  })();
+  const mapBase = { munis: M.munis.map(m => `<path d="${m.d}" />`).join(""), dist: M.districts.map(m => `<path d="${m.d}" />`).join("") };
   function mapSvg(c, span) {
     const C = D.cinemas[c];
-    const [cx, cy] = proj(C.lat, C.lon), w = span, h = span * 3 / 4;
-    const k = span / 12;
+    const [cx, cy] = proj(C.lat, C.lon), w = span, h = span * 3 / 4, k = span / 12;
     const labels = [...M.districts.map(m => [m, 1]), ...M.munis.map(m => [m, 0])]
       .filter(([m]) => Math.abs(m.x - cx) < w / 2 && Math.abs(m.y - cy) < h / 2)
       .map(([m, isD]) => `<text x="${m.x}" y="${m.y}" font-size="${(isD ? .34 : .4) * k}" text-anchor="middle" fill="var(--muted)" opacity="${isD ? .9 : .7}">${esc(m.n)}</text>`).join("");
@@ -580,7 +852,7 @@ footer a { color: inherit; }
       if (Math.abs(x - cx) > w / 2 || Math.abs(y - cy) > h / 2) return "";
       return `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${.11 * k}" fill="${isFav(i) ? "var(--fav)" : "var(--muted)"}" opacity=".8"><title>${esc(o.n)}</title></circle>`;
     }).join("");
-    return `<svg viewBox="${cx - w / 2} ${cy - h / 2} ${w} ${h}" role="img" aria-label="Mapa: ${esc(C.n)}">
+    return `<svg viewBox="${cx - w / 2} ${cy - h / 2} ${w} ${h}" role="img" aria-label="${esc(T("map") + ": " + C.n)}">
       <rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" fill="var(--map-land)" />
       <g fill="none" stroke="var(--map-line)" stroke-width="${.03 * k}" stroke-linejoin="round">${mapBase.munis}</g>
       <g fill="none" stroke="var(--map-line)" stroke-width="${.02 * k}" stroke-dasharray="${.08 * k} ${.06 * k}">${mapBase.dist}</g>
@@ -594,93 +866,90 @@ footer a { color: inherit; }
 
   let mapSpan = 8;
   function openCinema(c) {
-    const C = D.cinemas[c];
-    const draw = () => {
+    showPanel({ redraw: () => {
+      const C = D.cinemas[c];
       const all = filteredShows(s => s[1] === c);
       const byF = new Map();
       all.forEach(s => { if (!byF.has(s[0])) byF.set(s[0], []); byF.get(s[0]).push(s); });
       const films = [...byF.keys()].map(i => D.films[i]).sort(sortFilms);
       const multi = state.day === "all";
-      const dayTxt = state.day === "all" ? "esta semana" : dayLabel(state.day).replace(/<[^>]+>/g, "").toLowerCase().replace(/^(\D+)(\d+)$/, "$1 $2").trim();
+      const dayTxt = state.day === "all" ? T("thisWeek") : dayLabel(state.day).replace(/<small>/, " ").replace(/<[^>]+>/g, "").toLowerCase();
       const pr = priceFor(c, state.day === "all" ? todayIso : state.day, null);
       const sessionPrices = [...new Set(D.shows.filter(s => s[1] === c && s[5] != null).map(s => s[5]))].sort((a, b) => a - b);
       const gmaps = C.lat != null ? `https://www.google.com/maps/search/?api=1&query=${C.lat},${C.lon}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(C.n + " " + (C.a || "") + " Madrid")}`;
-      const priceRows = [];
-      if (sessionPrices.length) priceRows.push(`<dt>Entrada</dt><dd>${sessionPrices.map(eur).join(" · ")} según sesión</dd>`);
-      else if (C.p != null) priceRows.push(`<dt>Entrada</dt><dd>desde ${eur(C.p)}</dd>`);
-      else priceRows.push(`<dt>Entrada</dt><dd>Sin precio publicado</dd>`);
-      if (C.pt && !sessionPrices.length) priceRows.push(`<dt>Detalle</dt><dd>${esc(C.pt)}</dd>`);
-      if (pr.best) priceRows.push(`<dt>Tu precio</dt><dd class="deal">${eur(pr.best.p)} con ${esc(pr.best.name)}</dd>`);
+      const rows = [];
+      if (sessionPrices.length) rows.push(`<dt>${T("ticket")}</dt><dd>${sessionPrices.map(eur).join(" · ")} ${T("perSession")}</dd>`);
+      else if (C.p != null) rows.push(`<dt>${T("ticket")}</dt><dd>${C.p === 0 ? "" : T("from_") + " "}${eur(C.p)}</dd>`);
+      else rows.push(`<dt>${T("ticket")}</dt><dd>${T("noPrice")}</dd>`);
+      if (C.pt && !sessionPrices.length) rows.push(`<dt>${T("detail")}</dt><dd>${esc(C.pt)}</dd>`);
+      if (pr.best) rows.push(`<dt>${T("yourPrice")}</dt><dd class="deal">${eur(pr.best.p)} ${T("withDisc")} ${esc(pr.best.name)}</dd>`);
       const applicable = state.discounts.filter(d => scopeMatches(d, c));
       $("panelTitle").innerHTML = `${esc(C.n)}<div class="sub">${esc([C.a, C.town].filter(Boolean).join(" · "))}${C.ch ? " · " + esc(C.ch) : ""}</div>`;
       $("panelBody").innerHTML = `
-        <div><button class="pill favs" type="button" data-fav="${c}" aria-pressed="${isFav(c)}">${isFav(c) ? "★ En tus cines" : "☆ Añadir a mis cines"}</button></div>
+        <div><button class="pill favs" type="button" data-fav="${c}" aria-pressed="${isFav(c)}">${isFav(c) ? T("inMine") : T("addMine")}</button></div>
         <div>
-          ${C.lat != null ? `<div class="mapbox">${mapSvg(c, mapSpan)}<div class="zoom"><button type="button" data-z="-1" aria-label="Acercar">+</button><button type="button" data-z="1" aria-label="Alejar">−</button></div></div>` : `<p class="note">No tenemos la ubicación exacta de este cine.</p>`}
-          <div class="maplinks"><a href="${gmaps}" target="_blank" rel="noopener">Abrir en Google Maps</a><a href="${esc(C.u)}" target="_blank" rel="noopener">Cartelera en ${esc(C.src === "web del cine" ? "la web del cine" : C.src)}</a></div>
+          ${C.lat != null ? `<div class="mapbox">${mapSvg(c, mapSpan)}<div class="zoom"><button type="button" data-z="-1" aria-label="${esc(T("zoomIn"))}">+</button><button type="button" data-z="1" aria-label="${esc(T("zoomOut"))}">−</button></div></div>` : `<p class="note">${T("noLoc")}</p>`}
+          <div class="maplinks"><a href="${gmaps}" target="_blank" rel="noopener">${T("gmaps")}</a><a href="${esc(C.u)}" target="_blank" rel="noopener">${T("listing")} ${esc(C.src === "web del cine" ? T("theSite") : C.src)}</a></div>
         </div>
-        <div><h4>Precio</h4><dl class="kv">${priceRows.join("")}</dl>
-          ${!applicable.length ? `<p class="note">¿Tienes carnet joven, de estudiante o una tarjeta de cine? <button class="more" type="button" id="toDisc">Añade tus descuentos</button></p>` : ""}</div>
-        <div><h4>En cartel ${esc(dayTxt)}${state.vose ? " · solo VOSE" : ""}</h4>
+        <div><h4>${T("price")}</h4><dl class="kv">${rows.join("")}</dl>
+          ${!applicable.length ? `<p class="note">${T("discHint")} <button class="more" type="button" id="toDisc">${T("addDisc")}</button></p>` : ""}</div>
+        <div><h4>${esc(T("showing")(dayTxt))}${state.vose ? T("onlyVose") : ""}</h4>
           <div class="plist">${films.length ? films.map(f => {
-            const ss = byF.get(D.films.indexOf(f)).sort((a, b) => (a[2] + a[3]).localeCompare(b[2] + b[3]));
+            const ss = byF.get(f.idx).sort((a, b) => (a[2] + a[3]).localeCompare(b[2] + b[3]));
             return `<div class="pfilm">${f.img ? `<img src="${f.img}" alt="">` : `<div class="ph"></div>`}
               <div><b>${esc(f.t)}</b> <span class="meta">${esc([f.y, f.rt ? f.rt + " min" : ""].filter(Boolean).join(" · "))}</span><div class="times">${chipsHtml(ss, multi)}</div></div>
               ${stubHtml(f, true)}</div>`;
-          }).join("") : `<p class="note">No hay sesiones ${esc(dayTxt)} con estos filtros.</p>`}</div></div>`;
+          }).join("") : `<p class="note">${esc(T("noSess")(dayTxt))}</p>`}</div></div>`;
       $("panelBody").querySelectorAll("[data-z]").forEach(b => b.addEventListener("click", () => { mapSpan = Math.min(48, Math.max(2, mapSpan * (b.dataset.z === "1" ? 2 : .5))); refreshPanel(); }));
       const td = $("toDisc"); if (td) td.addEventListener("click", () => openDiscounts(c));
-    };
-    showPanel("", "", { redraw: draw }); draw();
+    } });
   }
 
   function openDirectory() {
-    const draw = () => {
+    showPanel({ redraw: () => {
       const counts = {};
       filteredShows().forEach(s => { counts[s[1]] = (counts[s[1]] || 0) + 1; });
-      const idx = D.cinemas.map((_, i) => i);
-      const groups = [["Tus cines", idx.filter(isFav)], ["Madrid capital", idx.filter(i => !isFav(i) && /^madrid$/i.test(D.cinemas[i].town || "Madrid"))], ["Resto de la Comunidad", idx.filter(i => !isFav(i) && !/^madrid$/i.test(D.cinemas[i].town || "Madrid"))]];
-      $("panelTitle").innerHTML = `Cines<div class="sub">Marca con ★ los tuyos para filtrar por ellos. Toca un nombre para ver dónde está y qué ponen.</div>`;
+      const idx = D.cinemas.map((_, i) => i), city = i => /^madrid$/i.test(D.cinemas[i].town || "Madrid");
+      const groups = [[T("yours"), idx.filter(isFav)], [T("capital"), idx.filter(i => !isFav(i) && city(i))], [T("region"), idx.filter(i => !isFav(i) && !city(i))]];
+      $("panelTitle").innerHTML = `${T("dirTitle")}<div class="sub">${T("dirSub")}</div>`;
       $("panelBody").innerHTML = groups.filter(g => g[1].length).map(([name, list]) => `<div><h4>${name}</h4><div class="dir">${list.sort((a, b) => D.cinemas[a].n.localeCompare(D.cinemas[b].n, "es")).map(i => {
         const C = D.cinemas[i];
-        return `<div class="row"><button class="star" type="button" data-fav="${i}" aria-pressed="${isFav(i)}" aria-label="Favorito">★</button><button class="clink" type="button" data-cine="${i}">${esc(C.n)}</button><small>${C.town && !/^madrid$/i.test(C.town) ? esc(C.town) + " · " : ""}${counts[i] || 0} sesiones</small></div>`;
+        return `<div class="row"><button class="star" type="button" data-fav="${i}" aria-pressed="${isFav(i)}" aria-label="${esc(T("fav"))}">★</button><button class="clink" type="button" data-cine="${i}">${esc(C.n)}</button><small>${C.town && !/^madrid$/i.test(C.town) ? esc(C.town) + " · " : ""}${T("nSess")(counts[i] || 0)}</small></div>`;
       }).join("")}</div></div>`).join("");
-    };
-    showPanel("", "", { redraw: draw }); draw();
+    } });
   }
 
   // ---------- discounts ----------
-  const KIND = { price: "Precio fijo (€)", pct: "Descuento (%)", off: "Euros menos (€)" };
   const DAYS_ORDER = [1, 2, 3, 4, 5, 6, 0];
   function discDesc(d) {
-    const scope = d.scope === "all" ? "Todos los cines" : d.scope.startsWith("chain:") ? "Cines " + d.scope.slice(6) : d.scope.slice(7);
+    const scope = d.scope === "all" ? T("allCinemas") : d.scope.startsWith("chain:") ? T("cinemasOf")(d.scope.slice(6)) : d.scope.slice(7);
     const val = d.kind === "price" ? eur(d.value) : d.kind === "pct" ? "−" + d.value + " %" : "−" + eur(d.value);
-    const days = d.days && d.days.length && d.days.length < 7 ? " · " + DAYS_ORDER.filter(x => d.days.includes(x)).map(x => WD[x]).join(", ") : "";
+    const days = d.days && d.days.length && d.days.length < 7 ? " · " + DAYS_ORDER.filter(x => d.days.includes(x)).map(x => WD()[x]).join(", ") : "";
     return `${val} · ${esc(scope)}${days}`;
   }
   function openDiscounts(preCinema) {
     const chains = [...new Set(D.cinemas.map(c => c.ch).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
-    const draw = () => {
-      $("panelTitle").innerHTML = `Mis descuentos<div class="sub">Añade el precio que pagas tú con carnet joven, de estudiante, tarjetas de cine o días del espectador. Se guarda solo en este navegador.</div>`;
+    showPanel({ redraw: function draw() {
+      $("panelTitle").innerHTML = `${T("discTitle")}<div class="sub">${T("discSub")}</div>`;
       $("panelBody").innerHTML = `
-        <div>${state.discounts.length ? state.discounts.map((d, i) => `<div class="disc"><div><b>${esc(d.name)}</b><small>${discDesc(d)}</small></div><button type="button" data-del="${i}">Quitar</button></div>`).join("") : `<p class="note">Aún no tienes descuentos. Cuando añadas uno, verás tu precio junto a cada cine.</p>`}</div>
+        <div>${state.discounts.length ? state.discounts.map((d, i) => `<div class="disc"><div><b>${esc(d.name)}</b><small>${discDesc(d)}</small></div><button type="button" data-del="${i}">${T("remove")}</button></div>`).join("") : `<p class="note">${T("discNone")}</p>`}</div>
         <form class="form" id="discForm" novalidate>
-          <h4>Nuevo descuento</h4>
-          <div class="quick">${["Carnet Joven", "Estudiante", "Menores de 25", "Tarjeta de cine", "Día del espectador"].map(n => `<button type="button" data-q="${n}">${n}</button>`).join("")}</div>
-          <label>Nombre<input id="dName" required placeholder="Por ejemplo: Carnet Joven"></label>
-          <label>Dónde se aplica<select id="dScope">
-            <option value="all">Todos los cines</option>
-            <optgroup label="Cadenas">${chains.map(c => `<option value="chain:${esc(c)}">${esc(c)}</option>`).join("")}</optgroup>
-            <optgroup label="Un cine">${D.cinemas.map(c => c.n).sort((a, b) => a.localeCompare(b, "es")).map(n => `<option value="cinema:${esc(n)}">${esc(n)}</option>`).join("")}</optgroup>
+          <h4>${T("newDisc")}</h4>
+          <div class="quick">${T("quick").map(n => `<button type="button" data-q="${esc(n)}">${esc(n)}</button>`).join("")}</div>
+          <label>${T("name")}<input id="dName" required placeholder="${esc(T("namePh"))}"></label>
+          <label>${T("where")}<select id="dScope">
+            <option value="all">${T("allCinemas")}</option>
+            <optgroup label="${esc(T("chains"))}">${chains.map(c => `<option value="chain:${esc(c)}">${esc(c)}</option>`).join("")}</optgroup>
+            <optgroup label="${esc(T("oneCinema"))}">${D.cinemas.map(c => c.n).sort((a, b) => a.localeCompare(b, "es")).map(n => `<option value="cinema:${esc(n)}">${esc(n)}</option>`).join("")}</optgroup>
           </select></label>
           <div class="two">
-            <label>Tipo<select id="dKind">${Object.entries(KIND).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select></label>
-            <label>Valor<input id="dValue" type="number" min="0" step="0.05" inputmode="decimal" placeholder="6,00"></label>
+            <label>${T("type")}<select id="dKind">${Object.entries(T("kinds")).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select></label>
+            <label>${T("value")}<input id="dValue" type="number" min="0" step="0.05" inputmode="decimal" placeholder="6,00"></label>
           </div>
-          <div><span class="note">Días</span><div class="wd">${DAYS_ORDER.map(x => `<label><input type="checkbox" value="${x}" checked>${WD[x]}</label>`).join("")}</div></div>
+          <div><span class="note">${T("days")}</span><div class="wd">${DAYS_ORDER.map(x => `<label><input type="checkbox" value="${x}" checked>${WD()[x]}</label>`).join("")}</div></div>
           <p class="err" id="dErr" hidden></p>
-          <div><button class="btn" type="submit">Añadir descuento</button></div>
-          <p class="note">El precio fijo funciona aunque no sepamos el precio normal del cine. El porcentaje y los euros menos se calculan sobre el precio publicado.</p>
+          <div><button class="btn" type="submit">${T("addDiscBtn")}</button></div>
+          <p class="note">${T("discNote")}</p>
         </form>`;
       if (preCinema != null) $("dScope").value = "cinema:" + D.cinemas[preCinema].n;
       $("panelBody").querySelectorAll("[data-q]").forEach(b => b.addEventListener("click", () => { $("dName").value = b.dataset.q; $("dValue").focus(); }));
@@ -689,15 +958,81 @@ footer a { color: inherit; }
         e.preventDefault();
         const name = $("dName").value.trim(), value = parseFloat(String($("dValue").value).replace(",", "."));
         const kind = $("dKind").value, days = [...$("discForm").querySelectorAll(".wd input:checked")].map(x => +x.value);
-        const err = !name ? "Ponle un nombre al descuento." : !(value >= 0) ? "Escribe el valor: un precio en euros o un porcentaje." : kind === "pct" && value > 100 ? "El porcentaje no puede pasar de 100." : !days.length ? "Elige al menos un día." : "";
+        const err = !name ? T("errName") : !(value >= 0) ? T("errVal") : kind === "pct" && value > 100 ? T("errPct") : !days.length ? T("errDays") : "";
         if (err) { $("dErr").textContent = err; $("dErr").hidden = false; return; }
         state.discounts.push({ name, scope: $("dScope").value, kind, value, days: days.length === 7 ? [] : days });
         save(); render(); preCinema = null; draw();
       });
-    };
-    showPanel("", "", { redraw: draw }); draw();
+    } });
   }
 
+  // ---------- my films: tracking, Letterboxd watchlist, phone alerts ----------
+  function parseCsv(text) {
+    const rows = []; let row = [], cell = "", q = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (q) { if (ch === '"' && text[i + 1] === '"') { cell += '"'; i++; } else if (ch === '"') q = false; else cell += ch; }
+      else if (ch === '"') q = true; else if (ch === ",") { row.push(cell); cell = ""; }
+      else if (ch === "\n" || ch === "\r") { if (ch === "\r" && text[i + 1] === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
+      else cell += ch;
+    }
+    if (cell || row.length) { row.push(cell); rows.push(row); }
+    return rows;
+  }
+  const readText = file => new Promise((ok, fail) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = fail; r.readAsText(file); });
+  async function readWatchlist(file) {
+    let text = null;
+    if (/\.zip$/i.test(file.name)) {
+      if (!window.JSZip) throw new Error("zip");
+      const zip = await JSZip.loadAsync(file);
+      const entry = Object.values(zip.files).find(z => /(^|\/)watchlist\.csv$/i.test(z.name));
+      if (entry) text = await entry.async("string");
+    } else text = await readText(file);
+    if (!text) throw new Error("csv");
+    const rows = parseCsv(text.replace(/^﻿/, ""));
+    const head = (rows.shift() || []).map(h => h.trim().toLowerCase());
+    const iN = head.indexOf("name"), iY = head.indexOf("year");
+    if (iN < 0) throw new Error("csv");
+    return rows.filter(r => r[iN]).map(r => ({ n: r[iN], y: +r[iY] || null }));
+  }
+  const newTopic = () => "vamosalcine-" + Array.from(crypto.getRandomValues(new Uint8Array(6)), b => "abcdefghijkmnpqrstuvwxyz23456789"[b % 32]).join("");
+  function copyBtn(id, text) {
+    const b = $(id); if (!b) return;
+    b.addEventListener("click", () => {
+      const done = () => { b.textContent = T("copied"); setTimeout(() => { b.textContent = T("copy"); }, 1500); };
+      const fallback = () => { const ta = b.parentElement.querySelector("textarea, code"); if (!ta) return; const r = document.createRange(); r.selectNodeContents(ta); const s = getSelection(); s.removeAllRanges(); s.addRange(r); if (ta.select) ta.select(); };
+      try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
+    });
+  }
+  function openTracking() {
+    showPanel({ redraw: function draw() {
+      const showing = t => D.films.find(f => lastDate[f.idx] && f.keys.includes(norm(t)));
+      const wlOn = D.films.filter(f => lastDate[f.idx] && inWatchlist(f)).length;
+      $("panelTitle").innerHTML = `${T("trackTitle")}<div class="sub">${T("trackSub")}</div>`;
+      $("panelBody").innerHTML = `
+        <div><h4>${T("tracking")}</h4>${state.track.length ? state.track.map((t, i) => {
+          const f = showing(t);
+          const n = f ? new Set(D.shows.filter(s => s[0] === f.idx).map(s => s[1])).size : 0;
+          return `<div class="disc"><div><b>${esc(t)}</b><small>${f ? `<button class="tlink" type="button" data-find="${esc(f.t)}">${esc(T("onNow")(T("inCinemas")(n)))}</button>` : T("notYet")}</small></div><button type="button" data-untrack="${i}">${T("remove")}</button></div>`;
+        }).join("") : `<p class="note">${T("trackNone")}</p>`}
+          <form class="form addt" id="trackForm" novalidate><label>${T("addTitle")}<input id="tName" list="titles" placeholder="${esc(T("addTitlePh"))}"></label><button class="btn" type="submit">${T("add")}</button></form></div>
+        <div><h4>${T("wlTitle")}</h4><p class="note">${T("wlHelp")}</p>
+          <label class="btn ghost filebtn">${T("wlFile")}<input type="file" id="wlFile" accept=".zip,.csv" hidden></label>
+          ${state.wl.length ? `<p class="note">${esc(T("wlLoaded")(state.wl.length, wlOn))} <button class="more" type="button" id="wlClear">${T("wlClear")}</button></p>` : ""}
+          <p class="err" id="wlErr" hidden></p></div>
+        <p class="note">${T("emailSoon")}</p>`;
+      $("panelBody").querySelectorAll("[data-untrack]").forEach(b => b.addEventListener("click", () => { state.track.splice(+b.dataset.untrack, 1); save(); render(); draw(); }));
+      $("trackForm").addEventListener("submit", e => { e.preventDefault(); const t = $("tName").value.trim(); if (t && !state.track.some(x => norm(x) === norm(t))) { state.track.push(t); save(); render(); } draw(); });
+      $("wlFile").addEventListener("change", async e => {
+        const file = e.target.files[0]; if (!file) return;
+        try { state.wl = await readWatchlist(file); save(); render(); draw(); }
+        catch (err) { $("wlErr").textContent = T("wlErr"); $("wlErr").hidden = false; }
+      });
+      const wc = $("wlClear"); if (wc) wc.addEventListener("click", () => { state.wl = []; save(); render(); draw(); });
+    } });
+  }
+
+  applyLang();
   render();
 })();
 </script>

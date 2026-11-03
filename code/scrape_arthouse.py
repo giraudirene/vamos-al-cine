@@ -3,6 +3,8 @@
   Cine Estudio (Círculo de Bellas Artes)  weekly table on /cine-estudio/
   La Casa Encendida                       /cine listing (title, author, "25 nov - 20:30 h", festival tag)
   Sala Berlanga                           WordPress API list of 'actividad' + each activity page ("18 de Noviembre - 20:15h")
+  Academia de Cine                        /actividades/ listing ("03/Nov · 19:00"; members-only sessions skipped)
+  Casa de América (Cine Iberia)           /agenda, CINE items ("Horario: 18:00"; free entry)
 
 Usage: python3 -I scrape_arthouse.py DATADIR   -> DATADIR/arthouse.json (same shape as extra_cinemas.json)
 A venue that fails keeps its previous data.
@@ -103,6 +105,51 @@ def berlanga():
     return {"name": "Sala Berlanga", "url": "https://salaberlanga.com/", "price": "", "shows": shows}
 
 
+def academia():
+    base = "https://www.academiadecine.com/actividades/"
+    page = get(base)
+    shows = []
+    for item in page.split('class="listadoActividades-actividad"')[1:]:
+        link = re.search(r'href="([^"]+)"', item)
+        fm = re.search(r'actividad-fecha">\s*(Hoy|\d{1,2}/\w+)\s*·\s*(\d{1,2}):(\d\d)', item)
+        nm = re.search(r'actividad-nombre">(.*?)</h2>', item, re.S)
+        sub = re.search(r'actividad-subtitulo">(.*?)</div>', item, re.S)
+        sub = txt(sub.group(1)) if sub else ""
+        if not fm or not nm or re.search(r"exclusiv|acad.micos", sub, re.I):
+            continue                                   # members-only screenings are not public
+        if fm.group(1) == "Hoy":
+            date = TODAY.isoformat()
+        else:
+            d, mon = fm.group(1).split("/")
+            date = to_date(d, mon)
+        shows.append(show(txt(nm.group(1)), date, f"{int(fm.group(2)):02d}:{fm.group(3)}", cycle=sub if len(sub) < 80 else "",
+                          url=link.group(1) if link else base))
+    dedup = {(s["title"], s["date"], s["time"]): s for s in shows}
+    return {"name": "Academia de Cine", "url": base, "price": "", "shows": list(dedup.values())}
+
+
+def casa_america():
+    base = "https://www.casamerica.es"
+    page = get(base + "/agenda")
+    shows = []
+    for group in page.split('<div class="view-grouping-content">')[1:]:
+        dm = re.search(r'class="fecha[^"]*">(\d{1,2}) de (\w+)', group)
+        if dm:
+            date = to_date(dm.group(1), dm.group(2))
+        for li in re.split(r"<li class=\"row", group)[1:]:
+            if not re.search(r'class="categoria[^"]*">\s*CINE', li):
+                continue
+            tm = re.search(r'<h3 class="titulo[^"]*"><a href="([^"]+)"[^>]*>(.*?)</a>', li, re.S)
+            hm = re.search(r"Horario:\s*(\d{1,2}):(\d\d)", li)
+            teaser = re.search(r'class="teaser">(.*?)</div>', li, re.S)
+            if tm and hm and dm:
+                tz = txt(teaser.group(1)) if teaser else ""
+                dirm = re.search(r"pel.cula de\s+([^,]+)", tz)
+                shows.append(show(txt(tm.group(2)), date, f"{int(hm.group(1)):02d}:{hm.group(2)}",
+                                  dirm.group(1).strip() if dirm else "", url=base + tm.group(1)))
+    return {"name": "Casa de América (Cine Iberia)", "url": base + "/cine", "price": "Entrada libre hasta completar aforo", "shows": shows}
+
+
 if __name__ == "__main__":
     path = f"{sys.argv[1]}/arthouse.json"
     try:
@@ -110,7 +157,8 @@ if __name__ == "__main__":
     except (OSError, ValueError):
         previous = {}
     out = []
-    for fn, name in ((cine_estudio, "Cine Estudio (Círculo de Bellas Artes)"), (casa_encendida, "La Casa Encendida"), (berlanga, "Sala Berlanga")):
+    for fn, name in ((cine_estudio, "Cine Estudio (Círculo de Bellas Artes)"), (casa_encendida, "La Casa Encendida"),
+                     (berlanga, "Sala Berlanga"), (academia, "Academia de Cine"), (casa_america, "Casa de América (Cine Iberia)")):
         try:
             c = fn()
         except Exception as e:
