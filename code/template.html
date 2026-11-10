@@ -230,6 +230,15 @@ footer a { color: inherit; }
 .tlink { border: 0; background: none; padding: 0; color: var(--accent); cursor: pointer; font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 .follow { margin-top: 6px; font-size: 12.5px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 2px 10px; cursor: pointer; }
 .follow[aria-pressed="true"] { border-color: var(--fav); color: var(--fav); font-weight: 600; }
+.up { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; gap: 2px 14px; align-items: start; padding-block: 10px; border-top: 1px solid var(--line); }
+.up .uposter { width: 46px; height: 66px; object-fit: cover; border-radius: 4px; background: var(--surface); display: block; }
+.up a { color: var(--ink); font-weight: 600; text-decoration: none; }
+.up a:hover { color: var(--accent); }
+.up .follow { margin-top: 0; white-space: nowrap; }
+.up .when3 { color: var(--accent); font-size: 12.5px; font-weight: 600; }
+.soonday { font-weight: 700; margin: 18px 0 2px; text-transform: capitalize; }
+.uphits { margin-bottom: 18px; }
+.uphits h4 { margin: 0 0 4px; font-size: 13px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
 .film.is-tracked .poster { outline: 2px solid var(--fav); outline-offset: 2px; }
 .badge.new { color: var(--deal); }
 .badge.last { color: var(--accent); }
@@ -304,6 +313,7 @@ footer a { color: inherit; }
       <div class="tools">
         <button class="pill" id="openDir" type="button" data-i18n="cinemas"></button>
         <button class="pill" id="openTrack" type="button"></button>
+        <button class="pill" id="openSoon" type="button" data-i18n="upc"></button>
         <button class="pill" id="openDisc" type="button"></button>
       </div>
     </div>
@@ -339,6 +349,7 @@ footer a { color: inherit; }
 <main class="wrap">
   <div id="tracked" class="tracked" hidden></div>
   <div id="list"></div>
+  <section class="fest" id="soonSec"></section>
   <section class="fest" id="fest"></section>
   <section class="fest" id="cal"></section>
 </main>
@@ -411,7 +422,8 @@ footer a { color: inherit; }
       cinemasOf: c => "Cines " + c,
       trackTitle: "Mis películas", trackSub: "Sigue películas, aunque aún no estén en cartel, e importa tu watchlist de Letterboxd. Todo se guarda solo en este navegador.",
       tracking: "Películas que sigo", trackNone: "Aún no sigues ninguna película. Pulsa «Seguir» en una película o escribe un título aquí abajo.",
-      onNow: n => `En cartel: ${n}`, notYet: "Aún no está en cartel", addTitle: "Añadir un título", addTitlePh: "Título de la película", add: "Seguir",
+      onNow: n => `En cartel: ${n}`, notYet: "Sin fecha de estreno en España", opens: d => "Se estrena el " + d, opened: d => "Estrenada el " + d + "; aún sin sesiones en Madrid",
+      upc: "Próximamente", upcIntro: "Próximos estrenos en cines de España (fuente: eCartelera). Pulsa «Seguir» y te avisaremos cuando llegue a Madrid.", upcMore: n => `Ver ${n} estrenos más`, upcNone: "No hay estrenos anunciados.", upcSearch: "Próximos estrenos", addTitle: "Añadir un título", addTitlePh: "Título de la película", add: "Seguir",
       wlTitle: "Watchlist de Letterboxd", wlHelp: "En Letterboxd: Ajustes → Data → Export your data. Sube aquí el .zip que descargas (o el archivo watchlist.csv).",
       wlFile: "Subir exportación de Letterboxd", wlLoaded: (n, m) => `${n} películas en tu watchlist; ${m} están en cartel esta semana.`, wlClear: "Borrar watchlist",
       wlErr: "No encuentro watchlist.csv en ese archivo. Sube el .zip de la exportación de Letterboxd o el watchlist.csv.",
@@ -461,7 +473,8 @@ footer a { color: inherit; }
       cinemasOf: c => c + " cinemas",
       trackTitle: "My films", trackSub: "Follow films, even before they're showing, and import your Letterboxd watchlist. Everything stays in this browser.",
       tracking: "Films I follow", trackNone: "You don't follow any film yet. Press \"Follow\" on a film or type a title below.",
-      onNow: n => `Showing: ${n}`, notYet: "Not showing yet", addTitle: "Add a title", addTitlePh: "Film title", add: "Follow",
+      onNow: n => `Showing: ${n}`, notYet: "No release date in Spain yet", opens: d => "Opens " + d, opened: d => "Opened " + d + "; no Madrid screenings yet",
+      upc: "Coming soon", upcIntro: "Upcoming releases in Spanish cinemas (source: eCartelera). Press \"Follow\" and we'll tell you when it reaches Madrid.", upcMore: n => `Show ${n} more releases`, upcNone: "No releases announced.", upcSearch: "Upcoming releases", addTitle: "Add a title", addTitlePh: "Film title", add: "Follow",
       wlTitle: "Letterboxd watchlist", wlHelp: "On Letterboxd: Settings → Data → Export your data. Upload the .zip you get (or the watchlist.csv file).",
       wlFile: "Upload Letterboxd export", wlLoaded: (n, m) => `${n} films in your watchlist; ${m} are showing this week.`, wlClear: "Clear watchlist",
       wlErr: "I can't find watchlist.csv in that file. Upload the Letterboxd export .zip or watchlist.csv.",
@@ -511,7 +524,8 @@ footer a { color: inherit; }
       cinemasOf: c => "Cinémas " + c,
       trackTitle: "Mes films", trackSub: "Suivez des films, même avant leur sortie, et importez votre watchlist Letterboxd. Tout reste dans ce navigateur.",
       tracking: "Films que je suis", trackNone: "Vous ne suivez aucun film. Appuyez sur « Suivre » sur un film ou tapez un titre ci-dessous.",
-      onNow: n => `À l'affiche : ${n}`, notYet: "Pas encore à l'affiche", addTitle: "Ajouter un titre", addTitlePh: "Titre du film", add: "Suivre",
+      onNow: n => `À l'affiche : ${n}`, notYet: "Pas encore de date de sortie en Espagne", opens: d => "Sort le " + d, opened: d => "Sorti le " + d + " ; pas encore de séance à Madrid",
+      upc: "Prochainement", upcIntro: "Prochaines sorties dans les cinémas espagnols (source : eCartelera). Appuyez sur « Suivre » et nous vous préviendrons quand il arrive à Madrid.", upcMore: n => `Voir ${n} sorties de plus`, upcNone: "Aucune sortie annoncée.", upcSearch: "Prochaines sorties", addTitle: "Ajouter un titre", addTitlePh: "Titre du film", add: "Suivre",
       wlTitle: "Watchlist Letterboxd", wlHelp: "Sur Letterboxd : Settings → Data → Export your data. Déposez ici le .zip obtenu (ou le fichier watchlist.csv).",
       wlFile: "Déposer l'export Letterboxd", wlLoaded: (n, m) => `${n} films dans votre watchlist ; ${m} passent cette semaine.`, wlClear: "Effacer la watchlist",
       wlErr: "Je ne trouve pas watchlist.csv dans ce fichier. Déposez le .zip d'export Letterboxd ou watchlist.csv.",
@@ -562,6 +576,12 @@ footer a { color: inherit; }
   const lastDate = {};
   D.shows.forEach(s => { if (!lastDate[s[0]] || s[2] > lastDate[s[0]]) lastDate[s[0]] = s[2]; });
   D.films.forEach((f, i) => { f.keys = [...new Set([f.t, f.en, f.orig].filter(Boolean).map(norm))]; f.idx = i; });
+  // upcoming releases (eCartelera): same title keys; dropped once the film is in the listings (same IMDb id)
+  const ecSlug = u => { const m = /ecartelera\.com\/peliculas\/([^/]+)/.exec(u || ""); return m ? m[1] : ""; };
+  D.films.forEach(f => { f.ec = ecSlug(f.u); });
+  const showingImdb = new Set(D.films.filter(f => lastDate[f.idx]).map(f => f.imdb).filter(Boolean));
+  D.upcoming = (D.upcoming || []).filter(u => !(u.imdb && showingImdb.has(u.imdb)));
+  D.upcoming.forEach((u, i) => { u.keys = [...new Set([u.t, u.en, u.orig].filter(Boolean).map(norm))]; u.uidx = i; });
   D.shows.forEach(s => { if (s[6] && /queer|lgtb|lgbt|orgullo|pride/i.test(s[6])) D.films[s[0]].qu = 1; });
   const daysSince = d => Math.round((parse(todayIso) - parse(d)) / 864e5);
   const isNew = f => f.fs && daysSince(f.fs) <= 7;
@@ -597,7 +617,7 @@ footer a { color: inherit; }
   const state = { day: dates.includes(todayIso) ? todayIso : dates[0], now: false, vose: false, few: true, favOnly: false, src: "fa", q: "",
     open: new Set(), favs: new Set(), discounts: [], track: [], wl: [], topic: "",
     genre: "", dur: 0, country: "", from: "", until: "", near: "", radius: 2,
-    classic: false, women: false, queer: false, onlyTracked: false, onlyWatch: false, onlyNew: false, filtOpen: false };
+    classic: false, women: false, queer: false, onlyTracked: false, onlyWatch: false, onlyNew: false, filtOpen: false, upcAll: false };
   const faMissing = D.films.filter(f => f.r != null).length < D.films.length * .3;   // Filmaffinity blocked or stale today
   if (faMissing) state.src = "av";
   try {
@@ -610,6 +630,9 @@ footer a { color: inherit; }
     if (typeof s.radius === "number") state.radius = s.radius;
     if (typeof s.topic === "string") state.topic = s.topic;
   } catch (e) {}
+  // followed films: {t, o (original title), y, imdb, ec (eCartelera slug)}; older versions stored plain titles
+  const tEntry = x => typeof x === "string" ? { t: x } : x;
+  state.track = state.track.map(tEntry).filter(e => e && e.t);
   const save = () => { saveLocal(); syncUp(); };
   const saveLocal = () => { try { localStorage.setItem(KEY, JSON.stringify({ vose: state.vose, few: state.few, favOnly: state.favOnly, src: state.src,
     favs: [...state.favs], discounts: state.discounts, track: state.track, wl: state.wl, near: state.near, radius: state.radius, topic: state.topic })); } catch (e) {} };
@@ -618,12 +641,35 @@ footer a { color: inherit; }
   function toggleFav(c) { const n = D.cinemas[c].n, adding = !state.favs.has(n); adding ? state.favs.add(n) : state.favs.delete(n); if (!state.favs.size) state.favOnly = false; save(); render(); refreshPanel(); if (adding) askLogin(); }
 
   // tracked films and watchlist: matched by any title (Spanish, English, original) and, for the watchlist, year ± 1
-  const trackKeys = () => new Set(state.track.map(t => norm(t)));
-  const isTracked = f => { const k = trackKeys(); return f.keys.some(x => k.has(x)); };
+  // a followed film matches by IMDb id or eCartelera page, else by any title with the year within 1
+  const identity = f => { const e = { t: f.t }; if (f.orig && norm(f.orig) !== norm(f.t)) e.o = f.orig; if (f.y) e.y = f.y; if (f.imdb) e.imdb = f.imdb; if (f.ec) e.ec = f.ec; return e; };
+  const matchT = (e, f) => !!((e.imdb && e.imdb === f.imdb) || (e.ec && e.ec === f.ec) ||
+    ([e.t, e.o].some(t => t && f.keys.includes(norm(t))) && (!e.y || !f.y || Math.abs(e.y - f.y) <= 1)));
+  const isTracked = f => state.track.some(e => matchT(e, f));
   function toggleTrack(f) {
-    if (isTracked(f)) state.track = state.track.filter(t => !f.keys.includes(norm(t)));
-    else { state.track.push(f.t); askLogin(); }
+    if (isTracked(f)) state.track = state.track.filter(e => !matchT(e, f));
+    else { state.track.push(identity(f)); askLogin(); }
     save(); render(); refreshPanel();
+  }
+  const dayFmt = d => parse(d).toLocaleDateString(lang, { weekday: "short", day: "numeric", month: "short" });
+  // where a followed film stands: in the listings, upcoming release, or no date
+  function trackStatus(e) {
+    const f = D.films.find(f => lastDate[f.idx] && matchT(e, f));
+    if (f) { const n = new Set(D.shows.filter(s => s[0] === f.idx).map(s => s[1])).size; return `<button class="tlink" type="button" data-find="${esc(f.t)}">${esc(T("onNow")(T("inCinemas")(n)))}</button>`; }
+    const u = D.upcoming.find(u => matchT(e, u));
+    if (u) return esc(u.date >= todayIso ? T("opens")(dayFmt(u.date)) : T("opened")(dayFmt(u.date)));
+    return T("notYet");
+  }
+  function upRow(u) {
+    const tr = isTracked(u);
+    const genres = (u.g && u.g.length ? u.g.slice(0, 3).map(g => GENRES[lang][g] || g) : (u.ge || []).slice(0, 3)).join(", ");
+    const meta = [u.d ? T("by") + " " + u.d : "", u.c, u.rt ? u.rt + " min" : "", genres].filter(Boolean).map(esc).join(" · ");
+    const rates = [u.ir != null && u.iv >= 50 ? `IMDb ${num(u.ir, 1)}` : "", u.lr != null && u.lv >= 50 ? `<a href="${esc(u.lu)}" target="_blank" rel="noopener">Letterboxd ${num(u.lr, 2)}/5</a>` : ""].filter(Boolean).join(" · ");
+    return `<div class="up">${u.img ? `<img class="uposter" src="${u.img}" alt="" loading="lazy">` : `<div class="uposter"></div>`}
+      <div><a href="${esc(u.u)}" target="_blank" rel="noopener">${esc(u.t)}</a>${u.y ? ` <span class="yr">${u.y}</span>` : ""}
+        <div class="when3">${esc(u.date >= todayIso ? T("opens")(dayFmt(u.date)) : T("opened")(dayFmt(u.date)))}</div>
+        ${meta ? `<div class="meta">${meta}</div>` : ""}${u.orig ? `<div class="meta">${esc(u.orig)}</div>` : ""}${rates ? `<div class="others">${rates}</div>` : ""}</div>
+      <button class="follow" type="button" data-utrack="${u.uidx}" aria-pressed="${tr}">${tr ? "✓ " + T("following") : "+ " + T("follow")}</button></div>`;
   }
   const inWatchlist = f => state.wl.some(w => f.keys.includes(norm(w.n)) && (!w.y || !f.y || Math.abs(w.y - f.y) <= 1));
 
@@ -677,7 +723,7 @@ footer a { color: inherit; }
     if (METRO.length) fillSelect($("fNear"), METRO.map(m => [m[0], m[0]])); else $("nearWrap").hidden = true;
     [["fGenre", "genre"], ["fCountry", "country"], ["fFrom", "from"], ["fUntil", "until"], ["fNear", "near"]].forEach(([id, k]) => { $(id).value = state[k]; });
     $("fDur").value = String(state.dur); $("fRadius").value = String(state.radius);
-    $("titles").innerHTML = [...new Set(D.films.flatMap(f => [f.t, f.en].filter(Boolean)).concat(D.cinemas.map(c => c.n)))].sort((a, b) => a.localeCompare(b, "es")).map(t => `<option value="${esc(t)}">`).join("");
+    $("titles").innerHTML = [...new Set(D.films.flatMap(f => [f.t, f.en].filter(Boolean)).concat(D.upcoming.map(u => u.t), D.cinemas.map(c => c.n)))].sort((a, b) => a.localeCompare(b, "es")).map(t => `<option value="${esc(t)}">`).join("");
   }
   [["fGenre", "genre"], ["fCountry", "country"], ["fFrom", "from"], ["fUntil", "until"], ["fNear", "near"]].forEach(([id, k]) => {
     $(id).addEventListener("change", e => { state[k] = e.target.value; save(); render(); });
@@ -714,6 +760,7 @@ footer a { color: inherit; }
   $("openDir").addEventListener("click", () => openDirectory());
   $("openDisc").addEventListener("click", () => openDiscounts());
   $("openTrack").addEventListener("click", () => openTracking());
+  $("openSoon").addEventListener("click", () => $("soonSec").scrollIntoView({ behavior: "smooth", block: "start" }));
   document.querySelector(".lang").addEventListener("click", e => {
     const b = e.target.closest("[data-lang]"); if (!b) return;
     lang = b.dataset.lang; try { localStorage.setItem("vamosalcine.lang", lang); } catch (err) {}
@@ -804,9 +851,11 @@ footer a { color: inherit; }
     const multi = state.day === "all";
     const rawQ = $("q").value.trim();
     const cineHits = q ? D.cinemas.map((c, i) => [c, i]).filter(([c]) => hits(c.n, q)) : [];
-    const offerTrack = rawQ.length >= 3 && !cineHits.length && !D.films.some(f => f.keys.some(k => hits(k, q))) && !state.track.some(t => norm(t) === q);
+    const upHits = q ? D.upcoming.filter(u => u.keys.some(k => hits(k, q)) || (u.d && hits(u.d, q))).slice(0, 8) : [];
+    const offerTrack = rawQ.length >= 3 && !cineHits.length && !upHits.length && !D.films.some(f => f.keys.some(k => hits(k, q))) && !state.track.some(e => norm(e.t) === q);
     $("list").innerHTML = (cineHits.length ? `<div class="cinehits">${cineHits.slice(0, 6).map(([c, i]) => `<button class="pill" type="button" data-cine="${i}">${esc(c.n)} →</button>`).join("")}</div>` : "") +
-      (!films.length ? `<div class="empty">${esc(T("none"))}</div>` : "") +
+      (upHits.length ? `<div class="uphits"><h4>${T("upcSearch")}</h4>${upHits.map(upRow).join("")}</div>` : "") +
+      (!films.length && !upHits.length ? `<div class="empty">${esc(T("none"))}</div>` : "") +
       (offerTrack ? `<div class="empty"><button class="btn" type="button" id="trackQuery">${esc(T("trackQuery")(rawQ))}</button></div>` : "") +
       films.map((f, k) => {
         const ss = byFilm.get(f.idx);
@@ -845,7 +894,19 @@ footer a { color: inherit; }
           <div class="sessions">${rows}${more}</div>
         </article>`;
       }).join("");
-    const tq = $("trackQuery"); if (tq) tq.addEventListener("click", () => { state.track.push(rawQ); save(); $("q").value = ""; state.q = ""; render(); if (!askLogin()) openTracking(); });
+    const tq = $("trackQuery"); if (tq) tq.addEventListener("click", () => { state.track.push({ t: rawQ }); save(); $("q").value = ""; state.q = ""; render(); if (!askLogin()) openTracking(); });
+
+    // upcoming releases, by release date; the first 6 weeks, then a "more" button
+    const horizon = (() => { const x = parse(todayIso); x.setDate(x.getDate() + 42); return x.getFullYear() + "-" + pad(x.getMonth() + 1) + "-" + pad(x.getDate()); })();
+    const upList = state.upcAll ? D.upcoming : D.upcoming.filter(u => u.date <= horizon);
+    const byDate = new Map(); upList.forEach(u => { if (!byDate.has(u.date)) byDate.set(u.date, []); byDate.get(u.date).push(u); });
+    $("soonSec").innerHTML = `<h3>${T("upc")}</h3><p>${T("upcIntro")}</p>` +
+      (D.upcoming.length ? [...byDate.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([d, us]) =>
+        `<div class="soonday">${esc(parse(d).toLocaleDateString(lang, { weekday: "long", day: "numeric", month: "long" }))}</div>` +
+        us.sort((a, b) => (b.iv || 0) - (a.iv || 0)).map(upRow).join("")).join("") +
+        (upList.length < D.upcoming.length ? `<button class="more" type="button" id="upcMore">${T("upcMore")(D.upcoming.length - upList.length)}</button>` : "")
+      : `<p class="note">${T("upcNone")}</p>`);
+    const um = $("upcMore"); if (um) um.addEventListener("click", () => { state.upcAll = true; render(); });
 
     // today's festival sessions
     const ev = D.events.filter(e => e.date >= todayIso && inDay(e.date) && hits(e.t + " " + e.cyc + " " + e.sec + " " + e.w, q));
@@ -880,6 +941,7 @@ footer a { color: inherit; }
     const f = e.target.closest("[data-fav]"); if (f) { toggleFav(+f.dataset.fav); return; }
     const c = e.target.closest("[data-cine]"); if (c) { openCinema(+c.dataset.cine); return; }
     const t = e.target.closest("[data-track]"); if (t) { toggleTrack(D.films[+t.dataset.track]); return; }
+    const ut = e.target.closest("[data-utrack]"); if (ut) { toggleTrack(D.upcoming[+ut.dataset.utrack]); return; }
     const fm = e.target.closest("[data-film]"); if (fm) { openFilm(+fm.dataset.film); return; }
     const fd = e.target.closest("[data-find]"); if (fd) { $("q").value = fd.dataset.find; state.q = norm(fd.dataset.find); state.day = "all"; render(); window.scrollTo({ top: 0 }); return; }
   });
@@ -1073,15 +1135,12 @@ footer a { color: inherit; }
   }
   function openTracking() {
     showPanel({ redraw: function draw() {
-      const showing = t => D.films.find(f => lastDate[f.idx] && f.keys.includes(norm(t)));
       const wlOn = D.films.filter(f => lastDate[f.idx] && inWatchlist(f)).length;
       $("panelTitle").innerHTML = `${T("trackTitle")}<div class="sub">${T("trackSub")}</div>`;
       $("panelBody").innerHTML = `
-        <div><h4>${T("tracking")}</h4>${state.track.length ? state.track.map((t, i) => {
-          const f = showing(t);
-          const n = f ? new Set(D.shows.filter(s => s[0] === f.idx).map(s => s[1])).size : 0;
-          return `<div class="disc"><div><b>${esc(t)}</b><small>${f ? `<button class="tlink" type="button" data-find="${esc(f.t)}">${esc(T("onNow")(T("inCinemas")(n)))}</button>` : T("notYet")}</small></div><button type="button" data-untrack="${i}">${T("remove")}</button></div>`;
-        }).join("") : `<p class="note">${T("trackNone")}</p>`}
+        <div><h4>${T("tracking")}</h4>${state.track.length ? state.track.map((e, i) =>
+          `<div class="disc"><div><b>${esc(e.t)}${e.y ? ` <span class="yr">${e.y}</span>` : ""}</b><small>${trackStatus(e)}</small></div><button type="button" data-untrack="${i}">${T("remove")}</button></div>`
+        ).join("") : `<p class="note">${T("trackNone")}</p>`}
           <form class="form addt" id="trackForm" novalidate><label>${T("addTitle")}<input id="tName" list="titles" placeholder="${esc(T("addTitlePh"))}"></label><button class="btn" type="submit">${T("add")}</button></form></div>
         <div><h4>${T("wlTitle")}</h4><p class="note">${T("wlHelp")}</p>
           <label class="btn ghost filebtn">${T("wlFile")}<input type="file" id="wlFile" accept=".zip,.csv" hidden></label>
@@ -1089,7 +1148,14 @@ footer a { color: inherit; }
           <p class="err" id="wlErr" hidden></p></div>
         <p class="note">${T("emailSoon")}</p>`;
       $("panelBody").querySelectorAll("[data-untrack]").forEach(b => b.addEventListener("click", () => { state.track.splice(+b.dataset.untrack, 1); save(); render(); draw(); }));
-      $("trackForm").addEventListener("submit", e => { e.preventDefault(); const t = $("tName").value.trim(); if (t && !state.track.some(x => norm(x) === norm(t))) { state.track.push(t); save(); render(); } draw(); });
+      $("trackForm").addEventListener("submit", e => {
+        e.preventDefault(); const t = $("tName").value.trim(); if (!t) return draw();
+        // a title that is showing or announced: follow that film (by id); otherwise keep the typed title
+        const k = norm(t), found = D.films.find(f => lastDate[f.idx] && f.keys.includes(k)) || D.upcoming.find(u => u.keys.includes(k));
+        const entry = found ? identity(found) : { t };
+        if (!state.track.some(x => matchT(x, found || { keys: [k] }))) { state.track.push(entry); save(); render(); askLogin(); }
+        draw();
+      });
       $("wlFile").addEventListener("change", async e => {
         const file = e.target.files[0]; if (!file) return;
         try { state.wl = await readWatchlist(file); save(); render(); draw(); askLogin(); }
@@ -1107,7 +1173,7 @@ footer a { color: inherit; }
       newPw: "Nueva contraseña", savePw: "Guardar contraseña", pwSaved: "Contraseña cambiada.", checkMail: "Te hemos enviado un email para confirmar tu cuenta. Ábrelo y vuelve aquí.",
       acctSub: "Con una cuenta, tus cines, películas, watchlist y descuentos se guardan y los ves en cualquier dispositivo.",
       loggedAs: e => "Has entrado como " + e, saveName: "Guardar nombre", saved: "Guardado", alertsOn: "Avisarme por email cuando una película que sigo entre en cartel",
-      alertWl: "Incluir también mi watchlist de Letterboxd", signOut: "Cerrar sesión", back: "Volver",
+      alertWl: "Incluir también mi watchlist de Letterboxd", alertRel: "Avisarme también la semana en que se estrena una película que sigo", signOut: "Cerrar sesión", back: "Volver",
       errLogin: "Email o contraseña incorrectos.", errConfirm: "Primero confirma tu cuenta con el enlace que te enviamos por email.", errExists: "Ya hay una cuenta con ese email. Entra o recupera la contraseña.",
       errShort: "La contraseña necesita al menos 8 caracteres.", errName: "Escribe un nombre.", errGeneric: "No se ha podido completar. Inténtalo de nuevo en un momento.",
       details: "Ficha", scores: "Notas", clubScore: "Nota del club", noClub: "Nadie del club la ha puntuado todavía.", sessionsH: "Sesiones",
@@ -1120,7 +1186,7 @@ footer a { color: inherit; }
       newPw: "New password", savePw: "Save password", pwSaved: "Password changed.", checkMail: "We've emailed you a link to confirm your account. Open it and come back here.",
       acctSub: "With an account, your cinemas, films, watchlist and discounts are saved and follow you to any device.",
       loggedAs: e => "Signed in as " + e, saveName: "Save name", saved: "Saved", alertsOn: "Email me when a film I follow starts showing",
-      alertWl: "Include my Letterboxd watchlist too", signOut: "Sign out", back: "Back",
+      alertWl: "Include my Letterboxd watchlist too", alertRel: "Also email me in the week a film I follow is released", signOut: "Sign out", back: "Back",
       errLogin: "Wrong email or password.", errConfirm: "Confirm your account first, with the link we emailed you.", errExists: "There's already an account with that email. Sign in or reset the password.",
       errShort: "The password needs at least 8 characters.", errName: "Type a name.", errGeneric: "That didn't work. Try again in a moment.",
       details: "Details", scores: "Scores", clubScore: "Club score", noClub: "Nobody in the club has rated it yet.", sessionsH: "Screenings",
@@ -1133,7 +1199,7 @@ footer a { color: inherit; }
       newPw: "Nouveau mot de passe", savePw: "Enregistrer", pwSaved: "Mot de passe modifié.", checkMail: "Nous vous avons envoyé un e-mail pour confirmer votre compte. Ouvrez-le puis revenez ici.",
       acctSub: "Avec un compte, vos cinémas, films, watchlist et réductions sont enregistrés et vous suivent sur tous vos appareils.",
       loggedAs: e => "Connecté en tant que " + e, saveName: "Enregistrer le nom", saved: "Enregistré", alertsOn: "M'avertir par e-mail quand un film suivi arrive à l'affiche",
-      alertWl: "Inclure aussi ma watchlist Letterboxd", signOut: "Se déconnecter", back: "Retour",
+      alertWl: "Inclure aussi ma watchlist Letterboxd", alertRel: "M'avertir aussi la semaine de sortie d'un film suivi", signOut: "Se déconnecter", back: "Retour",
       errLogin: "E-mail ou mot de passe incorrect.", errConfirm: "Confirmez d'abord votre compte avec le lien reçu par e-mail.", errExists: "Un compte existe déjà avec cet e-mail. Connectez-vous ou réinitialisez le mot de passe.",
       errShort: "Le mot de passe doit faire au moins 8 caractères.", errName: "Indiquez un nom.", errGeneric: "Ça n'a pas marché. Réessayez dans un instant.",
       details: "Fiche", scores: "Notes", clubScore: "Note du club", noClub: "Personne du club ne l'a encore notée.", sessionsH: "Séances",
@@ -1172,7 +1238,7 @@ footer a { color: inherit; }
     clearTimeout(syncTimer);
     syncTimer = setTimeout(() => {
       sb.from("user_state").upsert({ user_id: user.id, favs: [...state.favs], track: state.track, wl: state.wl, discounts: state.discounts,
-        prefs: { near: state.near, radius: state.radius, src: state.src, vose: state.vose, lang, alert_watchlist: state.alertWl !== false },
+        prefs: { near: state.near, radius: state.radius, src: state.src, vose: state.vose, lang, alert_watchlist: state.alertWl !== false, alert_release: state.alertRel !== false },
         updated_at: new Date().toISOString() }).then(() => {}, () => {});
     }, 700);
   }
@@ -1184,7 +1250,7 @@ footer a { color: inherit; }
     if (st) {                                       // lists: account and this browser combined; preferences: the account's
       const uniq = (a, key) => { const seen = new Set(); return a.filter(x => { const k = key(x); return seen.has(k) ? false : seen.add(k); }); };
       state.favs = new Set([...(st.favs || []), ...state.favs]);
-      state.track = uniq([...(st.track || []), ...state.track], t => norm(t));
+      state.track = uniq([...(st.track || []).map(tEntry).filter(e => e && e.t), ...state.track], e => e.imdb || e.ec || norm(e.t));
       state.wl = st.wl && st.wl.length ? st.wl : state.wl;
       state.discounts = uniq([...(st.discounts || []), ...state.discounts], d => JSON.stringify(d));
       const pr = st.prefs || {};
@@ -1192,6 +1258,7 @@ footer a { color: inherit; }
       if (pr.radius) state.radius = pr.radius;
       if (SRC[pr.src] && !(faMissing && pr.src === "fa")) state.src = pr.src;
       state.alertWl = pr.alert_watchlist !== false;
+      state.alertRel = pr.alert_release !== false;
     }
     saveLocal(); syncUp(); fillFilterOptions(); renderAcct(); render(); refreshPanel();
   }
@@ -1244,7 +1311,8 @@ footer a { color: inherit; }
         $("panelBody").innerHTML = `<div><p class="note">${esc(T("loggedAs")(user.email))}</p>${note}
           <form class="form" id="nameForm" novalidate><label>${T("dname")}<input id="aName" maxlength="40" value="${esc(profile ? profile.display_name : "")}"></label><div><button class="btn" type="submit">${T("saveName")}</button></div></form></div>
           <div class="form"><label class="check"><input type="checkbox" id="aAlerts" ${!profile || profile.email_alerts ? "checked" : ""}> ${T("alertsOn")}</label>
-          <label class="check"><input type="checkbox" id="aAlertWl" ${state.alertWl !== false ? "checked" : ""}> ${T("alertWl")}</label></div>
+          <label class="check"><input type="checkbox" id="aAlertWl" ${state.alertWl !== false ? "checked" : ""}> ${T("alertWl")}</label>
+          <label class="check"><input type="checkbox" id="aAlertRel" ${state.alertRel !== false ? "checked" : ""}> ${T("alertRel")}</label></div>
           ${profile && profile.is_admin ? `<div><h4>${T("moderation")}</h4><div id="blockedList"><p class="note">…</p></div></div>` : ""}
           <div><button class="btn ghost" type="button" id="aOut">${T("signOut")}</button></div>`;
         if (profile && profile.is_admin) {
@@ -1264,6 +1332,7 @@ footer a { color: inherit; }
         });
         $("aAlerts").addEventListener("change", async e => { const v = e.target.checked; await sb.from("profiles").update({ email_alerts: v }).eq("id", user.id); if (profile) profile.email_alerts = v; });
         $("aAlertWl").addEventListener("change", e => { state.alertWl = e.target.checked; syncUp(); });
+        $("aAlertRel").addEventListener("change", e => { state.alertRel = e.target.checked; syncUp(); });
         $("aOut").addEventListener("click", async () => { await sb.auth.signOut(); user = null; profile = null; renderAcct(); render(); closePanel(); });
         return;
       }

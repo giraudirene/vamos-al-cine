@@ -284,11 +284,22 @@ def main(d):
     with_later = {s[1] for s in shows.values() if s[1] in fa_cids and s[2] >= later}
     full_week = bool(fa_cids) and len(with_later) >= 0.6 * len(fa_cids)
 
+    # upcoming releases (eCartelera): released in the last week or later, and not already in the listings
+    showing_years = {}                           # title -> years of showing films with that title
+    for f in films.values():
+        for t in {f["t"], f.get("orig")} - {None, ""}:
+            showing_years.setdefault(norm(t), []).append(f.get("y"))
+    def is_showing(u):
+        return any(not u.get("y") or not y or abs(u["y"] - y) <= 1
+                   for t in {u["t"], u.get("orig")} - {None, ""} for y in showing_years.get(norm(t), []))
+    week_ago = (datetime.date.today() - datetime.timedelta(days=6)).isoformat()
+    upcoming = [dict(u, id="u:" + u["ec"]) for u in load("estrenos.json", []) if u["date"] >= week_ago and not is_showing(u)]
+
     fid_list = list(films)
     pos = {k: i for i, k in enumerate(fid_list)}
     out = {"scraped": fa["scraped"], "today": TODAY, "films": [films[k] for k in fid_list], "cinemas": cinemas,
            "shows": sorted([[pos[s[0]]] + s[1:] for s in shows.values()], key=lambda x: (x[2], x[3])),
-           "events": events, "cineteca": cineteca, "full_week": full_week,
+           "events": events, "cineteca": cineteca, "full_week": full_week, "upcoming": upcoming,
            "fest": sorted(fest, key=lambda e: (e["date"], e["time"]))}
     if len(out["shows"]) < 300:
         sys.exit(f"only {len(out['shows'])} sessions; keeping the previous site_data.json")

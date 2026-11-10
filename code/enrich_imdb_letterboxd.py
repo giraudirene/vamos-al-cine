@@ -11,6 +11,7 @@ import gzip, json, os, re, sys, time, unicodedata, urllib.request
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
 KINDS = {"movie", "tvMovie", "video", "short", "tvSpecial"}
+THIS_YEAR = time.localtime().tm_year
 
 
 def norm(s):
@@ -66,6 +67,8 @@ def imdb_match(films, imdbdir):
             f = next(x for x in films if x["id"] == fid)
             if f.get("y") and (y is None or abs(y - f["y"]) > 1):
                 continue
+            if not f.get("y") and str(f["id"]).startswith("u:") and (y is None or y < THIS_YEAR - 2):
+                continue                            # an upcoming release without a year is a recent film, not an old namesake
             v = votes.get(tconst, (None, 0))[1]
             if fid not in best or v > best[fid][1]:
                 best[fid] = (tconst, v)
@@ -95,7 +98,8 @@ def main(datadir, imdbdir):
     site = json.load(open(f"{datadir}/site_data.json"))
     cache_path = f"{datadir}/ext_ratings.json"
     cache = json.load(open(cache_path)) if os.path.exists(cache_path) else {}
-    films = site["films"]
+    shown = site["films"]
+    films = shown + site.get("upcoming", [])          # upcoming releases get an IMDb id too (follow by id, early ratings)
     ids, votes = imdb_match(films, imdbdir)
     for f in films:
         tc = f.get("imdb") or ids.get(f["id"])
@@ -130,8 +134,10 @@ def main(datadir, imdbdir):
         f["ir"], f["iv"] = c.get("im_r"), c.get("im_v", 0)
         f["lr"], f["lv"], f["lu"] = c.get("lb_r"), c.get("lb_v", 0), c.get("lb_u", "")
     json.dump(site, open(f"{datadir}/site_data.json", "w"), ensure_ascii=False, separators=(",", ":"))
-    n = len(films)
-    print(f"imdb {sum(1 for f in films if f['ir'])}/{n}, letterboxd {sum(1 for f in films if f['lr'])}/{n}", file=sys.stderr)
+    n = len(shown)
+    print(f"imdb {sum(1 for f in shown if f['ir'])}/{n}, letterboxd {sum(1 for f in shown if f['lr'])}/{n}", file=sys.stderr)
+    up = site.get("upcoming", [])
+    print(f"upcoming: imdb id {sum(1 for f in up if f['imdb'])}/{len(up)}, letterboxd {sum(1 for f in up if f['lr'])}", file=sys.stderr)
 
 
 if __name__ == "__main__":

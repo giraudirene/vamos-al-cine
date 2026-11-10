@@ -40,7 +40,7 @@ Order chosen 2026-11-02. Tick items off as they ship; add the date.
 ## Asked 2026-11-10 (plan: ~/.claude/plans/lively-sniffing-crane.md)
 21. [x] 2026-11-10 **Normal prices + día del espectador**: per-session normal price (weekday / weekend+holidays / discount day) from eCartelera's two price lines (parsed daily, code/prices.py) + hand-checked overrides in static/prices.json (Verdi, Cine Estudio, Casa de América); chain fallback; personal discounts only on top.
 22. [x] 2026-11-10 **Further ahead**: sessions up to 3 weeks (7 day buttons + "Más adelante" list; "Toda la semana" = 7 days); Cineteca 21 days (cycle names cached); Filmaffinity keeps yesterday's sessions beyond the days today's page shows, "más días" rotates (data/fa_more_log.json, least recently fetched first, FA ≥ 6.5), 20/30-min time budget and stop at the 2nd 429 (runs on 04/11 and 08/11 hit the 60-min timeout). Check the first GitHub run's fa.log.
-23. [ ] Próximos estrenos (eCartelera) + follow a film by id, alerts on release.
+23. [x] 2026-11-10 **Próximos estrenos + follow by identity**: code/scrape_estrenos.py (eCartelera release calendar, ~78 films a year ahead; film pages cached 14 days, posters embedded) → `upcoming` in site_data (IMDb id for ~95 %, Letterboxd when it exists); "Próximamente" section (6 weeks + "ver más") and pill; search shows releases with their date; followed films stored as {t, o, y, imdb, ec} (old plain titles still work), matched by IMDb id / eCartelera page / title ± 1 year; "Mis películas" says "En cartel" / "Se estrena el …" / "Sin fecha"; email_alerts.py same matching + release-week email (account checkbox, on by default).
 24. [ ] Irene's picks (Supabase table, admin edits from the film page; badge, note, top strip, filter).
 
 ## Done
