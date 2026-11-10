@@ -13,6 +13,7 @@ Usage: python3 -I build_data.py DATADIR
 import base64, datetime, json, os, re, sys, time, urllib.parse, urllib.request
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ratings_filmaffinity import get as fa_get, norm, parse_film_page, parse_search, SEARCH
+from prices import parse_rule, session_price
 
 TODAY = datetime.date.today().isoformat()
 LAST = (datetime.date.today() + datetime.timedelta(days=6)).isoformat()
@@ -40,9 +41,12 @@ def chain_of(name):
     return ""
 
 
-def price_from(text):
-    m = re.search(r"(\d+(?:[.,]\d{1,2})?)\s*(?:euros?|€)", text or "")
-    return float(m.group(1).replace(",", ".")) if m else None
+def load_overrides():
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "static", "prices.json")
+    try:
+        return {k: v for k, v in json.load(open(path)).items() if not k.startswith("_")}
+    except (OSError, ValueError):
+        return {}
 
 
 def fetch_bytes(url):
@@ -66,6 +70,7 @@ def main(d):
     search_cache = json.load(open(search_cache_path)) if os.path.exists(search_cache_path) else {}
 
     films, cinemas, shows = {}, [], {}
+    overrides = load_overrides()
     fest = []                                    # festival sessions up to 60 days ahead (calendar)
     title_index = {}
 
@@ -85,9 +90,13 @@ def main(d):
             lat, lon = e["lat"], e["lon"]
         if not address and e:
             address = re.sub(r",?\s*CP\d+.*$", "", e["address"])
-        price_txt = e["prices"] if e and e["prices"] else ""
+        price_txt = " · ".join(x for x in ((e or {}).get("prices", ""), (e or {}).get("reduced", "")) if x)
+        rule = next((v for k, v in overrides.items() if toks(k) == toks(name)), None) \
+            or (parse_rule(e.get("prices", ""), e.get("reduced", "")) if e else None)
+        if rule and rule.get("note"):
+            price_txt = rule["note"]
         cinemas.append({"n": name, "u": url, "src": src, "lat": lat, "lon": lon, "a": address, "town": town or "Madrid",
-                        "ch": chain_of(name), "pt": price_txt, "p": price_from(price_txt)})
+                        "ch": chain_of(name), "pt": price_txt, "pr": rule, "p": rule and (rule["n"] if rule.get("n") is not None else rule.get("w"))})
         return len(cinemas) - 1
 
     def add_film(fid, f):
@@ -183,7 +192,7 @@ def main(d):
                 fest.append({"date": s["date"], "time": s["time"], "t": s["title"], "u": s.get("url", ""),
                              "cyc": s["cycle"], "w": x["name"]})
         sp = sorted({s["price"] for s in x["shows"] if s.get("price")})
-        if sp:
+        if sp and not cinemas[cid]["pr"]:          # per-session prices only when the cinema has no price rule
             cinemas[cid]["p"] = sp[0]
             cinemas[cid]["pt"] = "Según la web del cine: " + " / ".join(f"{p:.2f}".replace(".", ",") + " €" for p in sp) + " según sesión"
 
@@ -223,6 +232,27 @@ def main(d):
             for t in e["times"]:
                 fest.append({"date": e["date"], "time": t, "t": e["title"], "u": e["url"],
                              "cyc": e.get("cycle") or e["section"], "w": "Cineteca Madrid"})
+
+    # same chain: cinemas eCartelera has no price for take the chain's most common rule
+    chain_rules = {}
+    for c in ec["cinemas"]:
+        ch = chain_of(c["name"]) or chain_of(c.get("chain", ""))
+        r = parse_rule(c.get("prices", ""), c.get("reduced", "")) if ch else None
+        if r:
+            chain_rules.setdefault(ch, []).append(json.dumps(r, sort_keys=True))
+    for c in cinemas:
+        if not c["pr"] and c["ch"] in chain_rules:
+            rs = chain_rules[c["ch"]]
+            c["pr"] = dict(json.loads(max(set(rs), key=rs.count)), src="eCartelera (misma cadena)")
+            c["p"] = c["pr"].get("n") or c["pr"].get("w")
+    # the normal price of each session (día del espectador and weekend built in); slot 8 = tag
+    for k, s in shows.items():
+        rule = cinemas[s[1]]["pr"]
+        if rule:
+            s[5], tag = session_price(rule, s[2], s[3])
+        else:
+            tag = ""
+        s.append(tag)
 
     # first time each film was seen (for "new this week"); the first run seeds everything as old
     fs_path = f"{d}/first_seen.json"
@@ -264,7 +294,7 @@ def main(d):
         sys.exit(f"only {len(out['shows'])} sessions; keeping the previous site_data.json")
     json.dump(out, open(f"{d}/site_data.json", "w"), ensure_ascii=False, separators=(",", ":"))
     print(len(out["films"]), "films", len(cinemas), "cinemas", len(out["shows"]), "shows", len(events), "events,",
-          sum(1 for c in cinemas if c["lat"]), "with coords,", sum(1 for c in cinemas if c["p"]), "with price", file=sys.stderr)
+          sum(1 for c in cinemas if c["lat"]), "with coords,", sum(1 for c in cinemas if c["pr"]), "with price rule", file=sys.stderr)
 
 
 if __name__ == "__main__":

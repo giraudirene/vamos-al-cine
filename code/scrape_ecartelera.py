@@ -51,6 +51,8 @@ def parse_cinema(page):
     info["chain"] = txt(m.group(1)) if m else ""
     m = re.search(r"<b>Precios:</b>(.*?)</p>", page, re.S)
     info["prices"] = txt(m.group(1)) if m else ""
+    m = re.search(r"<b>Reducidos y d.a del espectador:</b>(.*?)</p>", page, re.S)
+    info["reduced"] = txt(m.group(1)) if m else ""
     days = re.findall(r'<li[^>]*><a href="([^"]+)" title="Cartelera del ([^"]+)"', page)
     info["days"] = [(u, html.unescape(lbl)) for u, lbl in days]
     return info
@@ -109,7 +111,7 @@ def main(outdir):
         info = parse_cinema(page)
         cid = len(out_cinemas)
         out_cinemas.append({"id": cid, "name": info["name"] or name, "url": url, "address": info["address"],
-                            "lat": info["lat"], "lon": info["lon"], "chain": info["chain"], "prices": info["prices"]})
+                            "lat": info["lat"], "lon": info["lon"], "chain": info["chain"], "prices": info["prices"], "reduced": info["reduced"]})
         days = info["days"] or [(url, "Hoy %02d" % TODAY.day)]
         n = 0
         for j, (durl, lbl) in enumerate(days):

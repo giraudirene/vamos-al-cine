@@ -388,12 +388,12 @@ footer a { color: inherit; }
       festNone: "No hay sesiones de festival este día.", cal: "Calendario de festivales", calIntro: "Festivales con sesiones programadas en los próximos 60 días.",
       sessions: n => `${n} sesion${n === 1 ? "" : "es"}`, calNone: "Ningún festival programado ahora mismo.",
       foot1: "Horarios de Filmaffinity, eCartelera y las webs de Cines Verdi, Filmoteca Española (Cine Doré), Cineteca, Círculo de Bellas Artes, Sala Berlanga, La Casa Encendida, Academia de Cine y Casa de América. Notas de Filmaffinity, IMDb y Letterboxd; directoras y cine LGTBIQ+ según Wikidata.",
-      foot2: "Precios orientativos: compruébalos al comprar. Tus cines, películas, watchlist y descuentos se guardan solo en este navegador.",
+      foot2: "Precios normales y orientativos (con el día del espectador incluido): compruébalos al comprar. Tus descuentos personales solo se aplican si los añades. Tus cines, películas, watchlist y descuentos se guardan solo en este navegador.",
       foot3: "Mapa © colaboradores de OpenStreetMap. Datos del",
       // panels
       close: "Cerrar", fav: "Favorito", addMine: "☆ Añadir a mis cines", inMine: "★ En tus cines", noLoc: "No tenemos la ubicación exacta de este cine.",
       gmaps: "Abrir en Google Maps", listing: "Cartelera en", theSite: "la web del cine", price: "Precio", ticket: "Entrada",
-      perSession: "según sesión", noPrice: "Sin precio publicado", detail: "Detalle", yourPrice: "Tu precio",
+      perSession: "según sesión", esp: "Día del espectador", normalP: "Normal", weekendP: "Fin de semana y festivos", fridayToo: "viernes, sábado, domingo y festivos", source: "Fuente", checked: d => "comprobado el " + d, chainApprox: "Precio de otro cine de la misma cadena: orientativo.", noPrice: "Sin precio publicado", detail: "Detalle", yourPrice: "Tu precio",
       discHint: "¿Tienes carnet joven, de estudiante o una tarjeta de cine?", addDisc: "Añade tus descuentos",
       showing: d => "En cartel " + d, onlyVose: " · solo VOSE", noSess: d => `No hay sesiones ${d} con estos filtros.`, thisWeek: "esta semana",
       zoomIn: "Acercar", zoomOut: "Alejar", map: "Mapa",
@@ -439,11 +439,11 @@ footer a { color: inherit; }
       festNone: "No festival screenings this day.", cal: "Festival calendar", calIntro: "Festivals with screenings scheduled in the next 60 days.",
       sessions: n => `${n} screening${n === 1 ? "" : "s"}`, calNone: "No festivals scheduled right now.",
       foot1: "Showtimes from Filmaffinity, eCartelera and the websites of Cines Verdi, Filmoteca Española (Cine Doré), Cineteca, Círculo de Bellas Artes, Sala Berlanga, La Casa Encendida, Academia de Cine and Casa de América. Scores from Filmaffinity, IMDb and Letterboxd; women directors and LGBTQ+ films from Wikidata.",
-      foot2: "Prices are indicative: check when you buy. Your cinemas, films, watchlist and discounts are stored only in this browser.",
+      foot2: "Normal, indicative prices (discount days included): check when you buy. Personal discounts apply only if you add them. Your cinemas, films, watchlist and discounts are stored only in this browser.",
       foot3: "Map © OpenStreetMap contributors. Data from",
       close: "Close", fav: "Favourite", addMine: "☆ Add to my cinemas", inMine: "★ In your cinemas", noLoc: "We don't have this cinema's exact location.",
       gmaps: "Open in Google Maps", listing: "Listings on", theSite: "the cinema's website", price: "Price", ticket: "Ticket",
-      perSession: "depending on screening", noPrice: "No published price", detail: "Details", yourPrice: "Your price",
+      perSession: "depending on screening", esp: "Discount day", normalP: "Normal", weekendP: "Weekends and holidays", fridayToo: "Friday to Sunday and holidays", source: "Source", checked: d => "checked on " + d, chainApprox: "Price of another cinema in the same chain: indicative.", noPrice: "No published price", detail: "Details", yourPrice: "Your price",
       discHint: "Got a youth card, student card or cinema pass?", addDisc: "Add your discounts",
       showing: d => "Showing " + d, onlyVose: " · original version only", noSess: d => `No screenings ${d} with these filters.`, thisWeek: "this week",
       zoomIn: "Zoom in", zoomOut: "Zoom out", map: "Map",
@@ -489,11 +489,11 @@ footer a { color: inherit; }
       festNone: "Pas de séance de festival ce jour-là.", cal: "Calendrier des festivals", calIntro: "Festivals avec des séances prévues dans les 60 prochains jours.",
       sessions: n => `${n} séance${n === 1 ? "" : "s"}`, calNone: "Aucun festival programmé pour l'instant.",
       foot1: "Horaires de Filmaffinity, eCartelera et des sites des Cines Verdi, de la Filmoteca Española (Cine Doré), de la Cineteca, du Círculo de Bellas Artes, de la Sala Berlanga, de La Casa Encendida, de l'Academia de Cine et de la Casa de América. Notes Filmaffinity, IMDb et Letterboxd ; réalisatrices et films LGBTQ+ d'après Wikidata.",
-      foot2: "Prix indicatifs : vérifiez à l'achat. Vos cinémas, films, watchlist et réductions restent dans ce navigateur.",
+      foot2: "Prix normaux et indicatifs (jours réduits inclus) : vérifiez à l'achat. Vos réductions personnelles ne s'appliquent que si vous les ajoutez. Vos cinémas, films, watchlist et réductions restent dans ce navigateur.",
       foot3: "Carte © contributeurs OpenStreetMap. Données du",
       close: "Fermer", fav: "Favori", addMine: "☆ Ajouter à mes cinémas", inMine: "★ Dans vos cinémas", noLoc: "Nous n'avons pas l'adresse exacte de ce cinéma.",
       gmaps: "Ouvrir dans Google Maps", listing: "Programme sur", theSite: "le site du cinéma", price: "Prix", ticket: "Place",
-      perSession: "selon la séance", noPrice: "Prix non publié", detail: "Détail", yourPrice: "Votre prix",
+      perSession: "selon la séance", esp: "Jour réduit", normalP: "Normal", weekendP: "Week-end et jours fériés", fridayToo: "vendredi au dimanche et jours fériés", source: "Source", checked: d => "vérifié le " + d, chainApprox: "Prix d'un autre cinéma de la même chaîne : indicatif.", noPrice: "Prix non publié", detail: "Détail", yourPrice: "Votre prix",
       discHint: "Vous avez une carte jeune, étudiante ou une carte de cinéma ?", addDisc: "Ajoutez vos réductions",
       showing: d => "À l'affiche " + d, onlyVose: " · VOST seulement", noSess: d => `Aucune séance ${d} avec ces filtres.`, thisWeek: "cette semaine",
       zoomIn: "Zoomer", zoomOut: "Dézoomer", map: "Carte",
@@ -638,17 +638,24 @@ footer a { color: inherit; }
     }
     return { base, best };
   }
+  // list = the sessions shown for one cinema; slot 5 = normal price of that session, slot 8 = "esp" on a discount day
+  const espDays = C => C.pr && C.pr.d ? Object.keys(C.pr.d).map(k => (+k + 1) % 7) : [];
   function priceHtml(c, list) {
-    const ps = list.map(s => priceFor(c, s[2], s[5]));
-    const bases = ps.map(x => x.base).filter(x => x != null);
+    const C = D.cinemas[c], ps = list.map(s => ({ ...priceFor(c, s[2], s[5]), esp: s[8] === "esp" }));
     const deals = ps.filter(x => x.best);
-    const lo = bases.length ? Math.min(...bases) : null, hi = bases.length ? Math.max(...bases) : null;
-    const baseTxt = lo == null ? "" : (lo === hi ? eur(lo) : eur(lo) + "–" + eur(hi));
     if (deals.length) {
-      const d = deals.reduce((a, b) => a.best.p <= b.best.p ? a : b).best;
-      return `<span class="price">${baseTxt ? "<s>" + baseTxt + "</s> " : ""}<span class="deal">${eur(d.p)}</span> ${T("withDisc")} ${esc(d.name)}</span>`;
+      const d = deals.reduce((a, b) => a.best.p <= b.best.p ? a : b);
+      return `<span class="price">${d.base != null ? "<s>" + eur(d.base) + "</s> " : ""}<span class="deal">${eur(d.best.p)}</span> ${T("withDisc")} ${esc(d.best.name)}</span>`;
     }
-    return baseTxt ? `<span class="price">${lo === 0 ? "" : T("from_") + " "}${baseTxt}</span>` : "";
+    const days = new Set(list.map(s => s[2]));
+    if (days.size === 1 && ps.length && ps[0].base != null) {            // one day: that day's price
+      const lo = Math.min(...ps.map(x => x.base)), hi = Math.max(...ps.map(x => x.base));
+      const txt = (C.pr && C.pr.from ? T("from_") + " " : "") + (lo === hi ? eur(lo) : eur(lo) + "–" + eur(hi));
+      return ps.some(x => x.esp) ? `<span class="price"><span class="deal">${txt}</span> · ${T("esp")}</span>` : `<span class="price">${txt}</span>`;
+    }
+    if (C.p == null) return "";                                         // whole week: normal price + the cheap day
+    const ed = espDays(C);
+    return `<span class="price">${C.pr && C.pr.from ? T("from_") + " " : ""}${eur(C.p)}${ed.length ? ` · <span class="deal">${ed.map(d => WD()[d]).join(", ")} ${eur(Object.values(C.pr.d)[0][0])}</span>` : ""}</span>`;
   }
 
   // ---------- filters ----------
@@ -732,7 +739,7 @@ footer a { color: inherit; }
   const sortFilms = (a, b) => { const A = SRC[state.src].get(a), B = SRC[state.src].get(b); return (B.r ?? -1) / B.max - (A.r ?? -1) / A.max || B.v - A.v; };
   // each time links to that session's ticket page, or to the cinema's own listing when the source gives no link
   const chipsHtml = (list, multi) => list.map(s => {
-    const url = s[7] || D.cinemas[s[1]].u, tip = T("buy") + (s[5] != null ? " · " + eur(s[5]) : "");
+    const url = s[7] || D.cinemas[s[1]].u, tip = T("buy") + (s[5] != null ? " · " + eur(s[5]) : "") + (s[8] === "esp" ? " · " + T("esp") : "");
     return `<a class="t${s[4] ? " vo" : ""}${isPast(s) ? " past" : ""}" href="${esc(url)}" target="_blank" rel="noopener" title="${esc(tip)}">${multi ? `<span class="d">${WD()[parse(s[2]).getDay()]}</span>` : ""}${s[3]}</a>`;
   }).join("");
   const filteredShows = extra => D.shows.filter(s => (state.day === "all" || s[2] === state.day) && (!state.vose || s[4]) && (!extra || extra(s)));
@@ -923,13 +930,16 @@ footer a { color: inherit; }
       const multi = state.day === "all";
       const dayTxt = state.day === "all" ? T("thisWeek") : dayLabel(state.day).replace(/<small>/, " ").replace(/<[^>]+>/g, "").toLowerCase();
       const pr = priceFor(c, state.day === "all" ? todayIso : state.day, null);
-      const sessionPrices = [...new Set(D.shows.filter(s => s[1] === c && s[5] != null).map(s => s[5]))].sort((a, b) => a - b);
       const gmaps = C.lat != null ? `https://www.google.com/maps/search/?api=1&query=${C.lat},${C.lon}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(C.n + " " + (C.a || "") + " Madrid")}`;
       const rows = [];
-      if (sessionPrices.length) rows.push(`<dt>${T("ticket")}</dt><dd>${sessionPrices.map(eur).join(" · ")} ${T("perSession")}</dd>`);
-      else if (C.p != null) rows.push(`<dt>${T("ticket")}</dt><dd>${C.p === 0 ? "" : T("from_") + " "}${eur(C.p)}</dd>`);
-      else rows.push(`<dt>${T("ticket")}</dt><dd>${T("noPrice")}</dd>`);
-      if (C.pt && !sessionPrices.length) rows.push(`<dt>${T("detail")}</dt><dd>${esc(C.pt)}</dd>`);
+      const R = C.pr;
+      if (R && (R.n != null || R.w != null)) {
+        if (R.n != null) rows.push(`<dt>${T("normalP")}</dt><dd>${R.from ? T("from_") + " " : ""}${eur(R.n)}</dd>`);
+        if (R.w != null) rows.push(`<dt>${R.wf ? T("fridayToo") : T("weekendP")}</dt><dd>${eur(R.w)}</dd>`);
+        Object.entries(R.d || {}).forEach(([k, v]) => rows.push(`<dt>${T("esp")} · ${WDL()[(+k + 1) % 7].toLowerCase()}</dt><dd class="deal">${eur(v[0])}</dd>`));
+      } else rows.push(`<dt>${T("ticket")}</dt><dd>${T("noPrice")}</dd>`);
+      if (C.pt) rows.push(`<dt>${T("detail")}</dt><dd>${esc(C.pt)}</dd>`);
+      if (R && R.src) rows.push(`<dt>${T("source")}</dt><dd>${/^https?:/.test(R.src) ? `<a href="${esc(R.src)}" target="_blank" rel="noopener">${T("theSite")}</a>` : esc(R.src)}${R.chk ? ", " + T("checked")(new Date(R.chk).toLocaleDateString(lang)) : ""}</dd>`);
       if (pr.best) rows.push(`<dt>${T("yourPrice")}</dt><dd class="deal">${eur(pr.best.p)} ${T("withDisc")} ${esc(pr.best.name)}</dd>`);
       const applicable = state.discounts.filter(d => scopeMatches(d, c));
       $("panelTitle").innerHTML = `${esc(C.n)}<div class="sub">${esc([C.a, C.town].filter(Boolean).join(" · "))}${C.ch ? " · " + esc(C.ch) : ""}</div>`;
@@ -940,6 +950,7 @@ footer a { color: inherit; }
           <div class="maplinks"><a href="${gmaps}" target="_blank" rel="noopener">${T("gmaps")}</a><a href="${esc(C.u)}" target="_blank" rel="noopener">${T("listing")} ${esc(C.src === "web del cine" ? T("theSite") : C.src)}</a></div>
         </div>
         <div><h4>${T("price")}</h4><dl class="kv">${rows.join("")}</dl>
+          ${R && /cadena/.test(R.src || "") ? `<p class="note">${T("chainApprox")}</p>` : ""}
           ${!applicable.length ? `<p class="note">${T("discHint")} <button class="more" type="button" id="toDisc">${T("addDisc")}</button></p>` : ""}</div>
         <div><h4>${esc(T("showing")(dayTxt))}${state.vose ? T("onlyVose") : ""}</h4>
           <div class="plist">${films.length ? films.map(f => {

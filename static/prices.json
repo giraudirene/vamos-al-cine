@@ -1,0 +1,11 @@
+{
+  "_help": "Normal ticket prices checked by hand on each cinema's own website. They win over eCartelera's (sometimes old) price text. n = Monday-Friday, w = weekend and holidays, wf = Friday counts as weekend, d = cheap days for everyone (0 = Monday ... 4 = Friday) as [price, label]. Personal discounts (carnet joven, student, member cards) do NOT go here. Key = cinema name as shown on the site.",
+  "Cines Verdi Madrid": {"n": 8.5, "w": 10.0, "d": {"0": [5.9, "Lunes"]},
+    "src": "https://madrid.cines-verdi.com/precios", "chk": "2026-11-10",
+    "note": "Matinales 7 €. Con carnet joven, Fnac, universitarios o mayores de 60: 8 € de martes a jueves. Amigos del Verdi: lunes 5,40 €, martes a viernes 7 €, fines de semana 8,50 €."},
+  "Casa de America (Cine Iberia)": {"n": 0, "src": "https://www.casamerica.es/cine", "chk": "2026-11-10",
+    "note": "Entrada libre hasta completar aforo."},
+  "Cine Estudio (Círculo de Bellas Artes)": {"n": 5.5,
+    "src": "https://www.circulobellasartes.com/cine-estudio/", "chk": "2026-11-10",
+    "note": "Ciclos 5,50 €; estrenos 8 €. Menores de 25 y mayores de 65: 4 € (ciclos). Abono de 5 sesiones: 18 €."}
+}

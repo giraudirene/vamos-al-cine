@@ -37,6 +37,12 @@ Order chosen 2026-11-02. Tick items off as they ship; add the date.
 19. [ ] Film page: click a film → details, sessions, club stars + comments (public), your stars/comment.
 20. [ ] Email alerts when a followed film starts showing (daily job, club Gmail).
 
+## Asked 2026-11-10 (plan: ~/.claude/plans/lively-sniffing-crane.md)
+21. [x] 2026-11-10 **Normal prices + día del espectador**: per-session normal price (weekday / weekend+holidays / discount day) from eCartelera's two price lines (parsed daily, code/prices.py) + hand-checked overrides in static/prices.json (Verdi, Cine Estudio, Casa de América); chain fallback; personal discounts only on top.
+22. [ ] Further ahead: sessions up to 3 weeks, Filmaffinity sessions kept across days + rotating "más días", time budget so runs stop being cancelled.
+23. [ ] Próximos estrenos (eCartelera) + follow a film by id, alerts on release.
+24. [ ] Irene's picks (Supabase table, admin edits from the film page; badge, note, top strip, filter).
+
 ## Done
 - 2026-11-02 v2: Doré, Verdi (per-session prices), Cine Estudio, Berlanga, Casa Encendida; prices + personal discounts; favourite cinemas; cinema panel with SVG map; directory; FA/IMDb/Letterboxd/Media switch; filters (above).
 - 2026-11-03 renamed "La Butaca" → "Vamos al cine" (working name; site is for the UC3M economists cinema club)
