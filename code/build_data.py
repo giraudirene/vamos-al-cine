@@ -16,7 +16,7 @@ from ratings_filmaffinity import get as fa_get, norm, parse_film_page, parse_sea
 from prices import parse_rule, session_price
 
 TODAY = datetime.date.today().isoformat()
-LAST = (datetime.date.today() + datetime.timedelta(days=6)).isoformat()
+LAST = (datetime.date.today() + datetime.timedelta(days=20)).isoformat()     # 3 weeks of sessions
 FEST_LAST = (datetime.date.today() + datetime.timedelta(days=60)).isoformat()
 FEST_RE = re.compile(r"festival|queercinemad|muestra|semana de|m.rgenes|documenta|animadrid|cine por mujeres", re.I)
 CHAINS = ["Cinesa", "Yelmo", "Renoir", "Ocine", "Kinépolis", "mk2", "Verdi", "Conde Duque", "Golem",

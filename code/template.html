@@ -67,6 +67,8 @@ header.top { padding-block: 28px 8px; }
 .bar .wrap { display: flex; flex-direction: column; gap: 10px; }
 .days { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
 .days::-webkit-scrollbar { display: none; }
+.days select.later { font: inherit; font-size: 13px; color: inherit; background: var(--surface); flex: none; }
+.days select.later[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 .pill { font-size: 14px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 14px; cursor: pointer; white-space: nowrap; }
 .pill small { color: var(--muted); margin-left: 4px; font-variant-numeric: tabular-nums; }
 .days .pill[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
@@ -375,7 +377,7 @@ footer a { color: inherit; }
       any: "Cualquiera", country: "País", from: "Empieza desde", until: "Acaba antes de", anyTime: "Cualquier hora", near: "Cerca del metro",
       anywhere: "Cualquier sitio", within: "A menos de", onlyTracked: "Solo las que sigo", onlyWatchlist: "Solo mi watchlist",
       women: "Dirigida por mujeres", queer: "Cine LGTBIQ+", onlyNew: "Solo novedades", classics: "Solo clásicos (antes de 2000)", reset: "Quitar filtros",
-      today: "Hoy", tomorrow: "Mañana", week: "Toda la semana", films: n => n + (n === 1 ? " película" : " películas"),
+      later: "Más adelante…", today: "Hoy", tomorrow: "Mañana", week: "Toda la semana", films: n => n + (n === 1 ? " película" : " películas"),
       updated: (t, f, c) => `Actualizado el ${t} · ${f} películas en ${c} cines`, at: "a las",
       none: "Ninguna sesión con estos filtros. Prueba otro día, quita «Solo VOSE» o desactiva «+100 votos».",
       trackQuery: q => `Seguir «${q}» y avisarme cuando la pongan`, follow: "Seguir", following: "Siguiendo",
@@ -426,7 +428,7 @@ footer a { color: inherit; }
       any: "Any", country: "Country", from: "Starts after", until: "Ends before", anyTime: "Any time", near: "Near metro",
       anywhere: "Anywhere", within: "Within", onlyTracked: "Only films I follow", onlyWatchlist: "Only my watchlist",
       women: "Directed by women", queer: "LGBTQ+ cinema", onlyNew: "New only", classics: "Classics only (before 2000)", reset: "Clear filters",
-      today: "Today", tomorrow: "Tomorrow", week: "All week", films: n => n + (n === 1 ? " film" : " films"),
+      later: "Later…", today: "Today", tomorrow: "Tomorrow", week: "All week", films: n => n + (n === 1 ? " film" : " films"),
       updated: (t, f, c) => `Updated ${t} · ${f} films in ${c} cinemas`, at: "at",
       none: "No screenings with these filters. Try another day, or turn off \"Original version only\" or \"100+ votes\".",
       trackQuery: q => `Follow "${q}" and tell me when it's on`, follow: "Follow", following: "Following",
@@ -476,7 +478,7 @@ footer a { color: inherit; }
       any: "Toutes", country: "Pays", from: "Commence après", until: "Finit avant", anyTime: "N'importe quand", near: "Près du métro",
       anywhere: "Partout", within: "À moins de", onlyTracked: "Seulement ceux que je suis", onlyWatchlist: "Seulement ma watchlist",
       women: "Réalisé par des femmes", queer: "Cinéma LGBTQ+", onlyNew: "Nouveautés seulement", classics: "Classiques seulement (avant 2000)", reset: "Effacer les filtres",
-      today: "Aujourd'hui", tomorrow: "Demain", week: "Toute la semaine", films: n => n + " film" + (n === 1 ? "" : "s"),
+      later: "Plus tard…", today: "Aujourd'hui", tomorrow: "Demain", week: "Toute la semaine", films: n => n + " film" + (n === 1 ? "" : "s"),
       updated: (t, f, c) => `Mis à jour le ${t} · ${f} films dans ${c} cinémas`, at: "à",
       none: "Aucune séance avec ces filtres. Essayez un autre jour, ou retirez « VOST seulement » ou « +100 votes ».",
       trackQuery: q => `Suivre « ${q} » et me prévenir quand il passe`, follow: "Suivre", following: "Suivi",
@@ -552,6 +554,9 @@ footer a { color: inherit; }
   const isPast = s => s[2] === todayIso && toMin(s[3]) < nowMin - 10;
   D.shows = D.shows.filter(s => s[2] >= todayIso);                // the data file can be a day old
   const dates = [...new Set(D.shows.map(s => s[2]).concat(D.events.map(e => e.date).filter(d => d >= todayIso)))].sort();
+  // the first 7 days get a button each and make up "all week"; later days are picked from a list
+  const weekEnd = (() => { const x = parse(todayIso); x.setDate(x.getDate() + 6); return x.getFullYear() + "-" + pad(x.getMonth() + 1) + "-" + pad(x.getDate()); })();
+  const inDay = d => state.day === "all" ? d >= todayIso && d <= weekEnd : d === state.day;
 
   // films: all titles a person might type, last screening date
   const lastDate = {};
@@ -698,6 +703,7 @@ footer a { color: inherit; }
     const dt = parse(d), diff = Math.round((dt - parse(todayIso)) / 864e5);
     return (diff === 0 ? T("today") : diff === 1 ? T("tomorrow") : WDL()[dt.getDay()]) + " <small>" + dt.getDate() + "</small>";
   }
+  daysEl.addEventListener("change", e => { if (e.target.id !== "later" || !e.target.value) return; state.day = e.target.value; state.now = false; render(); refreshPanel(); });
   daysEl.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; state.day = b.dataset.d; if (state.day !== todayIso) state.now = false; render(); refreshPanel(); });
   $("now").addEventListener("click", () => { if (!dates.includes(todayIso)) return; state.now = !state.now; if (state.now) state.day = todayIso; render(); });
   $("vose").addEventListener("click", () => { state.vose = !state.vose; save(); render(); refreshPanel(); });
@@ -742,7 +748,7 @@ footer a { color: inherit; }
     const url = s[7] || D.cinemas[s[1]].u, tip = T("buy") + (s[5] != null ? " · " + eur(s[5]) : "") + (s[8] === "esp" ? " · " + T("esp") : "");
     return `<a class="t${s[4] ? " vo" : ""}${isPast(s) ? " past" : ""}" href="${esc(url)}" target="_blank" rel="noopener" title="${esc(tip)}">${multi ? `<span class="d">${WD()[parse(s[2]).getDay()]}</span>` : ""}${s[3]}</a>`;
   }).join("");
-  const filteredShows = extra => D.shows.filter(s => (state.day === "all" || s[2] === state.day) && (!state.vose || s[4]) && (!extra || extra(s)));
+  const filteredShows = extra => D.shows.filter(s => inDay(s[2]) && (!state.vose || s[4]) && (!extra || extra(s)));
   const badges = f => (f.y && f.y < 2000 ? `<span class="badge classic">${T("classic")}</span>` : "") +
     (isNew(f) ? `<span class="badge new">${T("isNew")}</span>` : "") + (isLast(f) ? `<span class="badge last">${T("lastDays")}</span>` : "") +
     (f.wo ? `<span class="badge women">${T("director")}</span>` : "") + (f.qu ? `<span class="badge queer">LGTBIQ+</span>` : "") +
@@ -751,7 +757,9 @@ footer a { color: inherit; }
 
   // ---------- main list ----------
   function render() {
-    daysEl.innerHTML = dates.concat(["all"]).map(d => `<button type="button" class="pill" data-d="${d}" aria-pressed="${state.day === d}">${dayLabel(d)}</button>`).join("");
+    const later = dates.filter(d => d > weekEnd);
+    daysEl.innerHTML = dates.filter(d => d <= weekEnd).concat(["all"]).map(d => `<button type="button" class="pill" data-d="${d}" aria-pressed="${state.day === d}">${dayLabel(d)}</button>`).join("") +
+      (later.length ? `<select class="pill later" id="later" aria-label="${esc(T("later"))}" aria-pressed="${later.includes(state.day)}"><option value="">${T("later")}</option>${later.map(d => `<option value="${d}"${state.day === d ? " selected" : ""}>${parse(d).toLocaleDateString(lang, { weekday: "long", day: "numeric", month: "short" })}</option>`).join("")}</select>` : "");
     $("now").setAttribute("aria-pressed", state.now); $("vose").setAttribute("aria-pressed", state.vose); $("few").setAttribute("aria-pressed", state.few);
     $("favs").setAttribute("aria-pressed", state.favOnly);
     $("favs").textContent = T("myCinemas") + (state.favs.size ? " (" + state.favs.size + ")" : "");
@@ -840,7 +848,7 @@ footer a { color: inherit; }
     const tq = $("trackQuery"); if (tq) tq.addEventListener("click", () => { state.track.push(rawQ); save(); $("q").value = ""; state.q = ""; render(); if (!askLogin()) openTracking(); });
 
     // today's festival sessions
-    const ev = D.events.filter(e => e.date >= todayIso && (state.day === "all" || e.date === state.day) && hits(e.t + " " + e.cyc + " " + e.sec + " " + e.w, q));
+    const ev = D.events.filter(e => e.date >= todayIso && inDay(e.date) && hits(e.t + " " + e.cyc + " " + e.sec + " " + e.w, q));
     $("fest").innerHTML = `<h3>${T("fest")}</h3><p>${T("festIntro")}</p>` +
       (ev.length ? ev.map(e => {
         const dt = parse(e.date);
