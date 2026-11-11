@@ -243,6 +243,9 @@ footer a { color: inherit; }
 .badge.new { color: var(--deal); }
 .badge.last { color: var(--accent); }
 .badge.wl { color: var(--fav); }
+.sessday { font-weight: 700; margin: 14px 0 4px; padding-top: 8px; border-top: 1px solid var(--line); text-transform: capitalize; }
+.sessday:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.sessday.cur { color: var(--accent); }
 .badge.pick { color: var(--bg); background: var(--accent); border-color: var(--accent); }
 .picknote { margin-top: 3px; font-size: 14px; font-style: italic; color: var(--ink); }
 .picknote::before { content: "“"; } .picknote::after { content: "”"; }
@@ -1485,10 +1488,12 @@ footer a { color: inherit; }
         const v = R.max === 5 ? num(R.r, 2) + "/5" : num(R.r, 1);
         return `<dt>${S.name}</dt><dd>${R.url ? `<a href="${esc(R.url)}" target="_blank" rel="noopener">${v}</a>` : v} <span class="meta">· ${R.v.toLocaleString(lang)} ${T("votes")}</span></dd>`;
       }).join("");
-      const ss = filteredShows(s => s[0] === i);
-      const byC = new Map(); ss.forEach(s => { if (!byC.has(s[1])) byC.set(s[1], []); byC.get(s[1]).push(s); });
-      const sess = [...byC.entries()].sort((a, b) => (isFav(b[0]) - isFav(a[0])) || D.cinemas[a[0]].n.localeCompare(D.cinemas[b[0]].n, "es")).map(([cid, list]) =>
-        `<div class="cine"><div class="cname"><button class="clink" type="button" data-cine="${cid}">${esc(D.cinemas[cid].n)}</button></div><div class="times">${chipsHtml(list.sort((a, b) => (a[2] + a[3]).localeCompare(b[2] + b[3])), state.day === "all")}</div></div>`).join("");
+      // every coming date, not only the day picked in the header (VOSE switch still applies)
+      const ss = D.shows.filter(s => s[0] === i && s[2] >= todayIso && (!state.vose || s[4]));
+      const byD = new Map(); ss.forEach(s => { if (!byD.has(s[2])) byD.set(s[2], new Map()); const m = byD.get(s[2]); if (!m.has(s[1])) m.set(s[1], []); m.get(s[1]).push(s); });
+      const sess = [...byD.keys()].sort().map(day => `<div class="sessday${day === state.day ? " cur" : ""}">${dayLabel(day).replace(/<small>.*<\/small>/, "").trim()} · ${esc(parse(day).toLocaleDateString(lang, { day: "numeric", month: "short" }))}</div>` +
+        [...byD.get(day).entries()].sort((a, b) => (isFav(b[0]) - isFav(a[0])) || D.cinemas[a[0]].n.localeCompare(D.cinemas[b[0]].n, "es")).map(([cid, list]) =>
+          `<div class="cine"><div class="cname"><button class="clink" type="button" data-cine="${cid}">${esc(D.cinemas[cid].n)}</button></div><div class="times">${chipsHtml(list.sort((a, b) => a[3].localeCompare(b[3])), false)}</div></div>`).join("")).join("");
       const isAdmin = !!(profile && profile.is_admin), blocked = !!(profile && profile.blocked);
       const nameOf = x => x.profiles ? x.profiles.display_name : "";
       const actions = (type, item) => {
@@ -1522,7 +1527,7 @@ footer a { color: inherit; }
         ${pickEditorHtml(f, pmsg, perr)}
         ${sb ? `<div><h4>${T("yourReview")}</h4>${form}</div>` : ""}
         ${sb ? `<div><h4>${T("comments")}</h4>${list || `<p class="note">${T("noComments")}</p>`}</div>` : ""}
-        <div><h4>${T("sessionsH")}${state.day !== "all" ? " · " + dayLabel(state.day).replace(/<[^>]+>/g, "") : ""}</h4><div class="sessions-panel">${sess || `<p class="note">${T("noSessDay")}</p>`}</div></div>`;
+        <div><h4>${T("sessionsH")}${state.vose ? " · VOSE" : ""}</h4><div class="sessions-panel">${sess || `<p class="note">${T("noSessDay")}</p>`}</div></div>`;
       const tl = $("toLogin"); if (tl) tl.addEventListener("click", () => openAccount("login"));
       wirePickEditor(f, (m, e) => { pmsg = m; perr = e; }, draw);
       const keepDraft = () => { const t = $("revText"); if (t) draftText = t.value; };
